@@ -1,14 +1,19 @@
 package org.metawatch.manager;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.app.Notification;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.accessibility.AccessibilityEvent;
 
 public class MetaWatchAccessibilityService extends AccessibilityService {
@@ -17,7 +22,8 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 	protected void onServiceConnected() {
 		super.onServiceConnected();
 		AccessibilityServiceInfo asi = new AccessibilityServiceInfo();
-		asi.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
+		asi.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED
+				| AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
 		asi.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
 		asi.flags = AccessibilityServiceInfo.DEFAULT;
 		asi.notificationTimeout = 100;
@@ -29,6 +35,50 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		// }
 	}
 
+	static LinkedList<Pair<String,Bitmap>> notificationIcons;
+	static {
+		notificationIcons = new LinkedList<Pair<String,Bitmap>>();
+	}
+
+	void addPersistentNotification(Notification n, PackageManager pm, PackageInfo pi)
+	{
+		if (n.icon == 0) return;
+		try {
+			Bitmap b = NotificationIconShrinker.shrink(
+					pm.getResourcesForApplication(pi.applicationInfo), n.icon);
+			if (b == null) return;
+			synchronized(notificationIcons) {
+				removePersistentNotifications(pi.packageName, false);
+				Log.d(MetaWatch.TAG,
+						"MetaWatchAccessibilityService.onAccessibilityEvent(): Adding notification for "+pi.packageName);
+				notificationIcons.addFirst(new Pair<String,Bitmap>(pi.packageName, b));
+			}
+			Idle.updateLcdIdle(this);
+			MetaWatchService.notifyClients();
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	void removePersistentNotifications(String packageName, boolean notify)
+	{
+		Log.d(MetaWatch.TAG,
+				"MetaWatchAccessibilityService.onAccessibilityEvent(): Removing notifications for "+packageName);
+		synchronized(notificationIcons) {
+			Iterator<Pair<String, Bitmap>> li = notificationIcons.iterator();
+			while (li.hasNext()) {
+				if (li.next().first.equals(packageName)) {
+					li.remove();
+					if (notify) {
+						Idle.updateLcdIdle(this);
+						MetaWatchService.notifyClients();
+					}
+					break;
+				}
+			}
+		}
+	}
+
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
 
@@ -38,6 +88,11 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		Log.d(MetaWatch.TAG,
 				"MetaWatchAccessibilityService.onAccessibilityEvent(): Received event, packageName = '"
 						+ packageName + "' className = '" + className + "'");
+
+		if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+			removePersistentNotifications(event.getPackageName().toString(), true);
+			return;
+		}
 
 		Parcelable p = event.getParcelableData();
 		if (p instanceof android.app.Notification == false) {
@@ -69,6 +124,16 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 
 		SharedPreferences sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(this);
+		PackageManager pm = getPackageManager();
+		PackageInfo packageInfo = null;
+		String appName = null;
+		try {
+			packageInfo = pm.getPackageInfo(packageName.toString(), 0);
+			addPersistentNotification(notification, pm, packageInfo);
+			appName = packageInfo.applicationInfo.loadLabel(pm).toString();
+		} catch (NameNotFoundException e) {
+			/* OK, appName is null */
+		}
 
 		/* Forward calendar event */
 		if (packageName.equals("com.android.calendar")) {
@@ -93,17 +158,6 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				Log.d(MetaWatch.TAG,
 						"onAccessibilityEvent(): App is blacklisted, ignoring.");
 				return;
-			}
-
-			PackageManager pm = getPackageManager();
-			PackageInfo packageInfo = null;
-			String appName = null;
-			try {
-				packageInfo = pm.getPackageInfo(packageName.toString(), 0);
-				appName = packageInfo.applicationInfo.loadLabel(pm).toString();
-
-			} catch (NameNotFoundException e) {
-				/* OK, appName is null */
 			}
 
 			if (appName == null) {

@@ -240,6 +240,13 @@
 			android:summary="Switch black/white bit"
 			android:defaultValue="false"
 			/>
+		<CheckBoxPreference
+			android:title="Dense layout"
+			android:key="DenseLayout"
+			android:summary="Dense layout with notification icons"
+			android:defaultValue="true"
+			/>
+
 	</PreferenceCategory>	
 	
 	<PreferenceCategory
