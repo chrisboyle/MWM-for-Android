@@ -115,11 +115,10 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			return;
 		}
 
-		if (notification.tickerText == null
-				|| notification.tickerText.toString().trim().length() == 0) {
-			Log.d(MetaWatch.TAG,
-					"MetaWatchAccessibilityService.onAccessibilityEvent(): Empty text, ignoring.");
-			return;
+		if (packageName.equals("com.google.android.gsf")) {
+			// GSF might notify for other reasons, but this is a very common case:
+			// Get a better label, and match the package later to clear the icon when Talk is opened
+			packageName = "com.google.android.talk";
 		}
 
 		SharedPreferences sharedPreferences = PreferenceManager
@@ -133,6 +132,13 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			appName = packageInfo.applicationInfo.loadLabel(pm).toString();
 		} catch (NameNotFoundException e) {
 			/* OK, appName is null */
+		}
+
+		if (notification.tickerText == null
+				|| notification.tickerText.toString().trim().length() == 0) {
+			Log.d(MetaWatch.TAG,
+					"MetaWatchAccessibilityService.onAccessibilityEvent(): Empty text, ignoring.");
+			return;
 		}
 
 		/* Forward calendar event */
