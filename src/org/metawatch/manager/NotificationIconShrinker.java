@@ -18,65 +18,58 @@ public class NotificationIconShrinker
 				0.114*Color.blue(color));
 	}
 
+	static final int ICON_HEIGHT = 13;  // "large" font is 11px high
+
 	public static Bitmap shrink(Resources r, int iconId)
 	{
-		// Get an icon appropriate for small screens
 		Drawable d = r.getDrawable(iconId);
 		if (d == null) return null;
 
-		// Coerce to bitmap
-		Bitmap in;
-		boolean inIsOurs;
-		if (d instanceof BitmapDrawable) {
-			in = ((BitmapDrawable)d).getBitmap();
-			inIsOurs = false;
-		} else {
-			int iw = d.getIntrinsicWidth();
-			int ih = d.getIntrinsicHeight();
-			if (iw <= 0) { iw = 18; ih = 18; }
-			in = Bitmap.createBitmap(iw, ih, Bitmap.Config.ARGB_8888);
-			inIsOurs = true;
-			d.setBounds(0,0,iw,ih);
-			d.draw(new Canvas(in));
-		}
+		// Coerce to Bitmap - might already be a BitmapDrawable, but make
+		// sure it's mutable and doesn't have unhelpful density info attached
+		int iw = d.getIntrinsicWidth();
+		int ih = d.getIntrinsicHeight();
+		if (iw <= 0) { iw = ICON_HEIGHT; ih = ICON_HEIGHT; }
+		Bitmap icon = Bitmap.createBitmap(iw, ih, Bitmap.Config.ARGB_8888);
+		d.setBounds(0,0,iw,ih);
+		d.draw(new Canvas(icon));
 
-		// Scale it to 18 pixels high
-		int h = 18;
-		int w = (int)Math.round((((double)in.getWidth())/in.getHeight())*h);
-		Bitmap out = Bitmap.createScaledBitmap(in, w, h, true);
-		if (out != in && inIsOurs) in.recycle();
-
-		// Threshold to monochrome
+		// Threshold to monochrome (for LCD), and create a bounding box
 		double maxLum = 0;
-		for (int y = 0; y < h; y++) {
-			for (int x = 0; x < w; x++) {
-				maxLum = Math.max(maxLum, luminance(out.getPixel(x,y)));
+		iw = icon.getWidth(); ih = icon.getHeight();
+		Log.d(MetaWatch.TAG, "scale: start "+iw+","+ih);
+		for (int y = 0; y < ih; y++) {
+			for (int x = 0; x < iw; x++) {
+				maxLum = Math.max(maxLum, luminance(icon.getPixel(x,y)));
 			}
 		}
-		double midLum = maxLum/2;
-		int minX = w, maxX = 0;
-		for (int y = 0; y < h; y++) {
-			for (int x = 0; x < w; x++) {
-				int c = out.getPixel(x, y);
-				if (luminance(c) >= midLum) {
-					out.setPixel(x, y, Color.BLACK);
+		double midLum = maxLum/1.3;
+		int minX = iw, maxX = 0, minY = ih, maxY = 0;
+		for (int y = 0; y < ih; y++) {
+			for (int x = 0; x < iw; x++) {
+				if (luminance(icon.getPixel(x,y)) >= midLum) {
 					minX = Math.min(minX, x);
 					maxX = Math.max(maxX, x);
+					minY = Math.min(minY, y);
+					maxY = Math.max(maxY, y);
+					icon.setPixel(x, y, Color.BLACK);
 				} else {
-					out.setPixel(x, y, Color.WHITE);
+					icon.setPixel(x, y, Color.WHITE);
 				}
 			}
 		}
 
-		// Some icons come with a lot of empty/dim space, get rid of it
-		int usefulWidth = maxX - minX;
-		if (usefulWidth >= 5) {
-			Bitmap cropped = Bitmap.createBitmap(out, minX, 0, (maxX-minX)+1, h);
-			if (cropped != out) {
-				out.recycle();
-				out = cropped;
-			}
+		// Crop to remove all blank space around the thresholded icon
+		Log.d(MetaWatch.TAG, "scale: found "+minX+"-"+maxX+","+minY+"-"+maxY);
+		if (maxX-minX >= 5 && maxY-minY >= 5) {
+			icon = Bitmap.createBitmap(icon, minX, minY, (maxX-minX)+1, (maxY-minY)+1);
+			iw = icon.getWidth();
+			ih = icon.getHeight();
 		}
-		return out;
+
+		// Scale it to ICON_HEIGHT pixels high
+		int h = ICON_HEIGHT;
+		int w = (int)Math.round((((double)iw)/ih)*h);
+		return Bitmap.createScaledBitmap(icon, w, h, true);
 	}
 }

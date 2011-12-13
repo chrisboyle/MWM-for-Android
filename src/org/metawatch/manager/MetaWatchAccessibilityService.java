@@ -1,7 +1,7 @@
 package org.metawatch.manager;
 
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.regex.Pattern;
+
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Notification;
@@ -13,7 +13,6 @@ import android.graphics.Bitmap;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.util.Pair;
 import android.view.accessibility.AccessibilityEvent;
 
 public class MetaWatchAccessibilityService extends AccessibilityService {
@@ -35,49 +34,10 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		// }
 	}
 
-	static LinkedList<Pair<String,Bitmap>> notificationIcons;
-	static {
-		notificationIcons = new LinkedList<Pair<String,Bitmap>>();
-	}
-
-	void addPersistentNotification(Notification n, PackageManager pm, PackageInfo pi)
-	{
-		if (n.icon == 0) return;
-		try {
-			Bitmap b = NotificationIconShrinker.shrink(
-					pm.getResourcesForApplication(pi.applicationInfo), n.icon);
-			if (b == null) return;
-			synchronized(notificationIcons) {
-				removePersistentNotifications(pi.packageName, false);
-				Log.d(MetaWatch.TAG,
-						"MetaWatchAccessibilityService.onAccessibilityEvent(): Adding notification for "+pi.packageName);
-				notificationIcons.addFirst(new Pair<String,Bitmap>(pi.packageName, b));
-			}
-			Idle.updateLcdIdle(this);
-			MetaWatchService.notifyClients();
-		} catch (NameNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-
-	void removePersistentNotifications(String packageName, boolean notify)
-	{
-		Log.d(MetaWatch.TAG,
-				"MetaWatchAccessibilityService.onAccessibilityEvent(): Removing notifications for "+packageName);
-		synchronized(notificationIcons) {
-			Iterator<Pair<String, Bitmap>> li = notificationIcons.iterator();
-			while (li.hasNext()) {
-				if (li.next().first.equals(packageName)) {
-					li.remove();
-					if (notify) {
-						Idle.updateLcdIdle(this);
-						MetaWatchService.notifyClients();
-					}
-					break;
-				}
-			}
-		}
-	}
+	// These apps should all be using the sync adapter framework instead of
+	// pointlessly notifying me...
+	static Pattern sillyOngoings = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh)ing\\b.*",
+			Pattern.CASE_INSENSITIVE);
 
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -90,7 +50,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 						+ packageName + "' className = '" + className + "'");
 
 		if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-			removePersistentNotifications(event.getPackageName().toString(), true);
+			LCDNotification.removePersistentNotifications(this, false, event.getPackageName().toString(), true);
 			return;
 		}
 
@@ -108,17 +68,13 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 						+ notification.flags + " ("
 						+ Integer.toBinaryString(notification.flags) + ")");
 
-		if ((notification.flags & android.app.Notification.FLAG_ONGOING_EVENT) > 0) {
-			/* Ignore updates to ongoing events. */
-			Log.d(MetaWatch.TAG,
-					"MetaWatchAccessibilityService.onAccessibilityEvent(): Ongoing event, ignoring.");
-			return;
-		}
-
 		if (packageName.equals("com.google.android.gsf")) {
 			// GSF might notify for other reasons, but this is a very common case:
 			// Get a better label, and match the package later to clear the icon when Talk is opened
 			packageName = "com.google.android.talk";
+		} else if (packageName.equals("org.metawatch.manager")) {
+			// Hey, that's me!
+			return;
 		}
 
 		SharedPreferences sharedPreferences = PreferenceManager
@@ -126,12 +82,33 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		PackageManager pm = getPackageManager();
 		PackageInfo packageInfo = null;
 		String appName = null;
+		boolean isOngoing = (notification.flags & android.app.Notification.FLAG_ONGOING_EVENT) > 0;
+		Bitmap icon = null;
 		try {
 			packageInfo = pm.getPackageInfo(packageName.toString(), 0);
-			addPersistentNotification(notification, pm, packageInfo);
+			if (notification.icon != 0) {
+				icon = NotificationIconShrinker.shrink(
+						pm.getResourcesForApplication(packageInfo.applicationInfo), notification.icon);
+				if (icon != null && ! isOngoing) {
+					String t = (notification.tickerText == null) ? null : notification.tickerText.toString();
+					LCDNotification.addPersistentNotification(this, false, packageName.toString(), icon, t);
+				}
+			}
+			if (isOngoing && notification.tickerText != null
+					&& ! sillyOngoings.matcher(notification.tickerText).matches()) {
+				LCDNotification.addPersistentNotification(this, true,
+						packageName.toString(), icon, notification.tickerText.toString());
+			}
 			appName = packageInfo.applicationInfo.loadLabel(pm).toString();
 		} catch (NameNotFoundException e) {
 			/* OK, appName is null */
+		}
+
+		if (isOngoing) {
+			/* Ignore updates to ongoing events. */
+			Log.d(MetaWatch.TAG,
+					"MetaWatchAccessibilityService.onAccessibilityEvent(): Ongoing event, ignoring.");
+			return;
 		}
 
 		if (notification.tickerText == null
@@ -171,14 +148,15 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 						"onAccessibilityEvent(): Unknown app -- sending notification: '"
 								+ notification.tickerText + "'.");
 				NotificationBuilder.createOtherNotification(this,
-						"Notification", notification.tickerText.toString());
+						"Notification", notification.tickerText.toString(),
+						icon);
 			} else {
 				Log.d(MetaWatch.TAG,
 						"onAccessibilityEvent(): Sending notification: app='"
 								+ appName + "' notification='"
 								+ notification.tickerText + "'.");
 				NotificationBuilder.createOtherNotification(this, appName,
-						notification.tickerText.toString());
+						notification.tickerText.toString(), icon);
 			}
 		}
 	}

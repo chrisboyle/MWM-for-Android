@@ -47,7 +47,6 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.util.Log;
-import android.util.Pair;
 
 public class Idle {
 	
@@ -69,28 +68,34 @@ public class Idle {
 		
 		canvas.drawColor(Color.WHITE);
 		
-		canvas = drawLine(canvas, 32);		
+		canvas = drawLine(canvas, 31);
+		int xAfterWeather = 1;
 		if(!Preferences.disableWeather) {
 			if (Preferences.denseLayout) {
 				if (WeatherData.received) {
 
-					paintLarge.setTextAlign(Paint.Align.RIGHT);
-					canvas.drawText(WeatherData.temp,         25, 47, paintLarge);
-					paintLarge.setTextAlign(Paint.Align.LEFT);
+					canvas.drawText(WeatherData.temp, 1, 45, paintLarge);
+					int x = (int)Math.ceil(2 + paintLarge.measureText(WeatherData.temp) +
+							Math.max(paintSmall.measureText(WeatherData.tempHigh),
+									paintSmall.measureText(WeatherData.tempLow)));
 					paintSmall.setTextAlign(Paint.Align.RIGHT);
-					canvas.drawText(WeatherData.tempHigh,     35, 40, paintSmall);
-					canvas.drawText(WeatherData.tempLow,      35, 48, paintSmall);
+					canvas.drawText(WeatherData.tempHigh, x, 39, paintSmall);
+					canvas.drawText(WeatherData.tempLow,  x, 45, paintSmall);
 					paintSmall.setTextAlign(Paint.Align.LEFT);
+					xAfterWeather = x + 1;
 
 				} else {
 					if (Preferences.weatherGeolocation) {
 						if( !LocationData.received ) {
-							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_gps.bmp"), 12, 34, null);
+							// 13x13
+							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_gps.bmp"), 12, 33, null);
 						} else {
-							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_data.bmp"), 12, 34, null);
+							// 14x13
+							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_data.bmp"), 12, 33, null);
 						}
 					} else {
-						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "weather_unknown.bmp"), 12, 34, null);
+						// 23x12
+						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "weather_unknown.bmp"), 7, 34, null);
 					}
 				}
 
@@ -162,18 +167,38 @@ public class Idle {
 		}
 
 		if (Preferences.denseLayout) {
-			int x = Preferences.disableWeather ? 1 : 36;
-			synchronized (MetaWatchAccessibilityService.notificationIcons) {
-				for (Pair<String,Bitmap> p : MetaWatchAccessibilityService.notificationIcons) {
-					Bitmap b = p.second;
-					// They're already scaled to 18 pixels high; width varies
-					int w = b.getWidth();
-					canvas.drawBitmap(b, null, new Rect(x, 33, x+w, 51), null);
+			int x = xAfterWeather;
+			synchronized (LCDNotification.iconNotifications) {
+				for (LCDNotification n : LCDNotification.iconNotifications) {
+					// They're already scaled to 14 pixels high; width varies
+					int w = n.icon.getWidth();
+					canvas.drawBitmap(n.icon, null, new Rect(x, 33, x+w, 46), null);
 					x += w + 1;
 					if (x > 96) break;
 				}
 			}
-			drawLine(canvas, 51);
+			drawLine(canvas, 47);
+
+			int y = 48;
+			synchronized (LCDNotification.ongoingNotifications) {
+				for (LCDNotification n : LCDNotification.ongoingNotifications) {
+					// They're already scaled to 13 pixels high; width varies
+					if (n.icon != null) {
+						int w = n.icon.getWidth();
+						x = 7 - w/2;
+						canvas.drawBitmap(n.icon, null, new Rect(x, y+1, x+w, y+13), null);
+					}
+					canvas.save();
+					TextPaint paint = new TextPaint(paintSmall);
+					StaticLayout layout = new StaticLayout(n.text, paint, 80, android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f, 0, false);
+					canvas.translate(15, y+1); //position the text
+					canvas.clipRect(0, 0, 80, NotificationIconShrinker.ICON_HEIGHT);
+					layout.draw(canvas);
+					canvas.restore();
+					y += NotificationIconShrinker.ICON_HEIGHT + 1;
+					if (y > 96) break;
+				}
+			}
 		}
 
 		// icons row

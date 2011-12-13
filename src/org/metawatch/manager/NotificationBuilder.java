@@ -182,7 +182,7 @@ public class NotificationBuilder {
 		}
 	}
 	
-	public static void createOtherNotification(Context context, String appName, String notificationText) {
+	public static void createOtherNotification(Context context, String appName, String notificationText, Bitmap icon) {
 		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsOtherNotificationNumberBuzzes");				
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
 			Notification.addTextNotification(context, appName + ": " + notificationText, vibratePattern, Notification.getDefaultNotificationTimeout(context));

@@ -203,13 +203,12 @@ public class IntentReceiver extends BroadcastReceiver {
 						"mobi.beyondpod.action.PLAYBACK_STATUS")
 				|| intent.getAction().equals("com.htc.music.metachanged")
 				|| intent.getAction().equals("com.nullsoft.winamp.metachanged")) {
-			if (!MetaWatchService.Preferences.notifyMusic)
-				return;
 
 			/* If the intent specifies a "playing" extra, use it. */
 			if (intent.hasExtra("playing")) {
 				boolean playing = intent.getBooleanExtra("playing", false);
 				if (playing == false) {
+					LCDNotification.removePersistentNotifications(context, true, intent.getAction(), true);
 					/* Ignore stop events. */
 					return;
 				}
@@ -235,8 +234,16 @@ public class IntentReceiver extends BroadcastReceiver {
 				lastTrack = track;
 				lastAlbum = album;
 			}
-			
-			if (intent.getAction().equals("com.nullsoft.winamp.metachanged")) {
+
+			boolean isWinamp = intent.getAction().equals("com.nullsoft.winamp.metachanged");
+			LCDNotification.addPersistentNotification(context, true, intent.getAction(),
+					Utils.loadBitmapFromAssets(context, isWinamp ? "winamp.bmp" : "play.bmp"),
+					track+" ("+artist+")");
+
+			if (!MetaWatchService.Preferences.notifyMusic)
+				return;
+
+			if (isWinamp) {
 				NotificationBuilder.createWinamp(context, artist, track, album);				
 			} else {
 				NotificationBuilder.createMusic(context, artist, track, album);
