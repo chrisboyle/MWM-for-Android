@@ -4,12 +4,13 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 public class NotificationIconShrinker
 {
+	static final int ICON_SIZE = 11;
+
 	static double luminance(int color)
 	{
 		return Color.alpha(color) * (
@@ -18,9 +19,7 @@ public class NotificationIconShrinker
 				0.114*Color.blue(color));
 	}
 
-	static final int ICON_HEIGHT = 13;  // "large" font is 11px high
-
-	public static Bitmap shrink(Resources r, int iconId)
+	public static Bitmap shrink(Resources r, int iconId, int maxSize)
 	{
 		Drawable d = r.getDrawable(iconId);
 		if (d == null) return null;
@@ -29,7 +28,7 @@ public class NotificationIconShrinker
 		// sure it's mutable and doesn't have unhelpful density info attached
 		int iw = d.getIntrinsicWidth();
 		int ih = d.getIntrinsicHeight();
-		if (iw <= 0) { iw = ICON_HEIGHT; ih = ICON_HEIGHT; }
+		if (iw <= 0) { iw = maxSize; ih = maxSize; }
 		Bitmap icon = Bitmap.createBitmap(iw, ih, Bitmap.Config.ARGB_8888);
 		d.setBounds(0,0,iw,ih);
 		d.draw(new Canvas(icon));
@@ -43,7 +42,7 @@ public class NotificationIconShrinker
 				maxLum = Math.max(maxLum, luminance(icon.getPixel(x,y)));
 			}
 		}
-		double midLum = maxLum/1.3;
+		double midLum = maxLum*0.55;
 		int minX = iw, maxX = 0, minY = ih, maxY = 0;
 		for (int y = 0; y < ih; y++) {
 			for (int x = 0; x < iw; x++) {
@@ -67,9 +66,15 @@ public class NotificationIconShrinker
 			ih = icon.getHeight();
 		}
 
-		// Scale it to ICON_HEIGHT pixels high
-		int h = ICON_HEIGHT;
-		int w = (int)Math.round((((double)iw)/ih)*h);
+		// Scale it to maxSize pixels high
+		int w, h;
+		if (iw > ih) {
+			w = maxSize;
+			h = (int)Math.round((((double)ih)/iw)*w);
+		} else {
+			h = maxSize;
+			w = (int)Math.round((((double)iw)/ih)*h);
+		}
 		return Bitmap.createScaledBitmap(icon, w, h, true);
 	}
 }

@@ -4,7 +4,6 @@ import java.util.regex.Pattern;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.app.Notification;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -84,11 +83,17 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		String appName = null;
 		boolean isOngoing = (notification.flags & android.app.Notification.FLAG_ONGOING_EVENT) > 0;
 		Bitmap icon = null;
+		if (event.getRemovedCount() > 0) {
+			// This is my hacked CyanogenMod telling us a Notification went away
+			LCDNotification.removePersistentNotifications(this, isOngoing, event.getPackageName().toString(), true);
+			return;
+		}
 		try {
 			packageInfo = pm.getPackageInfo(packageName.toString(), 0);
 			if (notification.icon != 0) {
 				icon = NotificationIconShrinker.shrink(
-						pm.getResourcesForApplication(packageInfo.applicationInfo), notification.icon);
+						pm.getResourcesForApplication(packageInfo.applicationInfo),
+						notification.icon, NotificationIconShrinker.ICON_SIZE);
 				if (icon != null && ! isOngoing) {
 					String t = (notification.tickerText == null) ? null : notification.tickerText.toString();
 					LCDNotification.addPersistentNotification(this, false, packageName.toString(), icon, t);
