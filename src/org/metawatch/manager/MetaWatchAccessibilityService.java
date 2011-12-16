@@ -93,7 +93,8 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			if (notification.icon != 0) {
 				icon = NotificationIconShrinker.shrink(
 						pm.getResourcesForApplication(packageInfo.applicationInfo),
-						notification.icon, NotificationIconShrinker.ICON_SIZE);
+						notification.icon, NotificationIconShrinker.ICON_SIZE,
+						NotificationIconShrinker.needsLowThreshold(packageName.toString()));
 				if (icon != null && ! isOngoing) {
 					String t = (notification.tickerText == null) ? null : notification.tickerText.toString();
 					LCDNotification.addPersistentNotification(this, false, packageName.toString(), icon, t);

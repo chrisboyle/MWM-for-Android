@@ -19,7 +19,13 @@ public class NotificationIconShrinker
 				0.114*Color.blue(color));
 	}
 
-	public static Bitmap shrink(Resources r, int iconId, int maxSize)
+	public static boolean needsLowThreshold(String packageName)
+	{
+		return packageName.equals("com.google.android.music")
+				|| packageName.equals("com.android.music");
+	}
+
+	public static Bitmap shrink(Resources r, int iconId, int maxSize, boolean lowThreshold)
 	{
 		Drawable d = r.getDrawable(iconId);
 		if (d == null) return null;
@@ -42,11 +48,11 @@ public class NotificationIconShrinker
 				maxLum = Math.max(maxLum, luminance(icon.getPixel(x,y)));
 			}
 		}
-		double midLum = maxLum*0.55;
+		double thresholdLum = maxLum * (lowThreshold ? 0.1 : 0.75);
 		int minX = iw, maxX = 0, minY = ih, maxY = 0;
 		for (int y = 0; y < ih; y++) {
 			for (int x = 0; x < iw; x++) {
-				if (luminance(icon.getPixel(x,y)) >= midLum) {
+				if (luminance(icon.getPixel(x,y)) >= thresholdLum) {
 					minX = Math.min(minX, x);
 					maxX = Math.max(maxX, x);
 					minY = Math.min(minY, y);
