@@ -628,6 +628,26 @@ public class Protocol {
 		sendQueue.add(bytes);
 	}
 
+	public static void setNvalDayFirst(boolean dayFirst) {
+		Log.d(MetaWatch.TAG, "Protocol.setNvalDayFirst()");
+		byte[] bytes = new byte[8];
+
+		bytes[0] = eMessageType.start;
+		bytes[1] = (byte) (bytes.length+2); // length
+		bytes[2] = eMessageType.NvalOperationMsg.msg; // nval operations
+		bytes[3] = 0x02; // write
+
+		bytes[4] = 0x0a;
+		bytes[5] = 0x20;
+		bytes[6] = 0x01; // size
+		if (dayFirst)
+			bytes[7] = 0x01;
+		else
+			bytes[7] = 0x00;
+
+		sendQueue.add(bytes);
+	}
+
 	public static void test(Context context) {
 		sendOledDisplay(createOled1line(context, null, "test abc 123"), true,
 				false);
