@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 public class NotificationIconShrinker
 {
@@ -19,15 +18,20 @@ public class NotificationIconShrinker
 				0.114*Color.blue(color));
 	}
 
-	public static boolean needsLowThreshold(String packageName)
+	public static double chooseThreshold(String packageName)
 	{
-		return packageName.equals("com.google.android.music")
-				|| packageName.equals("com.android.music");
+		return (packageName.equals("com.google.android.music")
+				|| packageName.equals("com.android.music")
+				|| packageName.equals("com.google.android.apps.maps"))
+				? 0.1 : 0.65;
 	}
 
-	public static Bitmap shrink(Resources r, int iconId, int maxSize, boolean lowThreshold)
+	public static Bitmap shrink(Resources r, int iconId, String packageName, int maxSize)
 	{
-		Drawable d = r.getDrawable(iconId);
+		Drawable d = null;
+		try {
+			d = r.getDrawable(iconId);
+		} catch (Exception e) {}
 		if (d == null) return null;
 
 		// Coerce to Bitmap - might already be a BitmapDrawable, but make
@@ -42,13 +46,12 @@ public class NotificationIconShrinker
 		// Threshold to monochrome (for LCD), and create a bounding box
 		double maxLum = 0;
 		iw = icon.getWidth(); ih = icon.getHeight();
-		Log.d(MetaWatch.TAG, "scale: start "+iw+","+ih);
 		for (int y = 0; y < ih; y++) {
 			for (int x = 0; x < iw; x++) {
 				maxLum = Math.max(maxLum, luminance(icon.getPixel(x,y)));
 			}
 		}
-		double thresholdLum = maxLum * (lowThreshold ? 0.1 : 0.75);
+		double thresholdLum = maxLum * chooseThreshold(packageName);
 		int minX = iw, maxX = 0, minY = ih, maxY = 0;
 		for (int y = 0; y < ih; y++) {
 			for (int x = 0; x < iw; x++) {
@@ -65,7 +68,6 @@ public class NotificationIconShrinker
 		}
 
 		// Crop to remove all blank space around the thresholded icon
-		Log.d(MetaWatch.TAG, "scale: found "+minX+"-"+maxX+","+minY+"-"+maxY);
 		if (maxX-minX >= 5 && maxY-minY >= 5) {
 			icon = Bitmap.createBitmap(icon, minX, minY, (maxX-minX)+1, (maxY-minY)+1);
 			iw = icon.getWidth();

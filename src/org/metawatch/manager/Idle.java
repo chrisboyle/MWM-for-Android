@@ -52,6 +52,15 @@ public class Idle {
 	
 	public static byte[] overridenButtons = null;
 
+	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
+
+	static int sum(int[] a)
+	{
+		int s = 0;
+		for (int i : a) s += i;
+		return s;
+	}
+
 	static Bitmap createLcdIdle(Context context) {
 		Bitmap bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(bitmap);
@@ -185,28 +194,49 @@ public class Idle {
 			drawLine(canvas, 47);
 
 			int y = 49;
+			int pxRemain = (96 - y) + 6;  // allow partial line at bottom
 			synchronized (LCDNotification.ongoingNotifications) {
 				int maxW = 13;
+				int[] heights = new int[LCDNotification.ongoingNotifications.size()];
+				int i=0;
 				for (LCDNotification n : LCDNotification.ongoingNotifications) {
-					if (n.icon != null) maxW = Math.max(maxW, n.icon.getWidth());
+					int h = 0;
+					if (n.icon != null) {
+						maxW = Math.max(maxW, n.icon.getWidth());
+						h = n.icon.getHeight();
+					}
+					TextPaint paint = new TextPaint(paintSmall);
+					StaticLayout layout = new StaticLayout(n.text, paint, 80,
+							android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
+							0, false);
+					heights[i++] = Math.max(h,Math.min(layout.getHeight(), pxRemain));
 				}
+				int maxLines = pxRemain/LINE_H + 1;
+				while (maxLines > 2 && sum(heights) > pxRemain) {
+					maxLines--;
+					for (i=0; i<heights.length; i++) {
+						heights[i] = Math.min(heights[i], maxLines*LINE_H - LINE_SP);
+					}
+				}
+				i = 0;
 				for (LCDNotification n : LCDNotification.ongoingNotifications) {
-					// They're already scaled to (usually) 13 pixels high; width varies
-					int h = n.icon.getHeight();
-					int th = Math.max(h, 12);  // 5px text * 2 + 2 between
+					int ih = n.icon.getHeight();
+					int th = Math.max(ih, heights[i++]);
 					if (n.icon != null) {
 						int w = n.icon.getWidth();
 						x = 1 + maxW/2 - w/2;
-						canvas.drawBitmap(n.icon, null, new Rect(x, y, x+w, y+h), null);
+						canvas.drawBitmap(n.icon, null, new Rect(x, y, x+w, y+ih), null);
 					}
 					canvas.save();
 					TextPaint paint = new TextPaint(paintSmall);
-					StaticLayout layout = new StaticLayout(n.text, paint, 80, android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f, 0, false);
+					StaticLayout layout = new StaticLayout(n.text, paint, 80,
+							android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
+							0, false);
 					canvas.translate(maxW + 2, y); //position the text
 					canvas.clipRect(0, 0, 80, th);
 					layout.draw(canvas);
 					canvas.restore();
-					y += th + 2;
+					y += th + 1;
 					if (y > 96) break;
 				}
 			}

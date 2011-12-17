@@ -36,6 +36,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.telephony.SmsMessage;
@@ -198,20 +202,39 @@ public class IntentReceiver extends BroadcastReceiver {
 			}
 			return;
 		}
-		else if (intent.getAction().equals("com.android.music.metachanged")
-				|| intent.getAction().equals(
+		else if (action.equals("com.android.music.metachanged")
+				|| action.equals("com.android.music.playbackcomplete")
+				|| action.equals("com.android.music.playbackstatechanged")
+				|| action.equals(
 						"mobi.beyondpod.action.PLAYBACK_STATUS")
-				|| intent.getAction().equals("com.htc.music.metachanged")
-				|| intent.getAction().equals("com.nullsoft.winamp.metachanged")) {
+				|| action.equals("com.htc.music.metachanged")
+				|| action.equals("com.nullsoft.winamp.metachanged")) {
+
+			PackageManager pm = context.getPackageManager();
+			String likelyPackage = action;
+			likelyPackage = likelyPackage.substring(0, likelyPackage.lastIndexOf("."));
+			if (likelyPackage.endsWith(".action")) {
+				likelyPackage = likelyPackage.substring(0, likelyPackage.length() - 7);
+			}
+			if (likelyPackage.equals("com.android.music")) {
+				try {
+					pm.getPackageInfo("com.google.android.music", 0);
+					likelyPackage = "com.google.android.music";
+				} catch (NameNotFoundException e) {}
+			}
 
 			/* If the intent specifies a "playing" extra, use it. */
-			if (intent.hasExtra("playing")) {
-				boolean playing = intent.getBooleanExtra("playing", false);
-				if (playing == false) {
-					LCDNotification.removePersistentNotifications(context, true, intent.getAction(), true);
-					/* Ignore stop events. */
-					return;
-				}
+			boolean playing = true;
+			if (action.endsWith(".playbackcomplete")) {
+				playing = false;
+			} else if (intent.hasExtra("playing")) {
+				playing = intent.getBooleanExtra("playing", false);
+			}
+			if (playing == false) {
+				LCDNotification.removePersistentNotifications(
+						context, true, likelyPackage, true);
+				/* Ignore stop events. */
+				return;
 			}
 			
 			String artist = "";
@@ -235,15 +258,24 @@ public class IntentReceiver extends BroadcastReceiver {
 				lastAlbum = album;
 			}
 
-			boolean isWinamp = intent.getAction().equals("com.nullsoft.winamp.metachanged");
-			LCDNotification.addPersistentNotification(context, true, intent.getAction(),
-					Utils.loadBitmapFromAssets(context, isWinamp ? "winamp.bmp" : "play.bmp"),
-					track+" ("+artist+")");
+			Bitmap icon = null;
+			try {
+				PackageInfo packageInfo = pm.getPackageInfo(likelyPackage, 0);
+				icon = NotificationIconShrinker.shrink(
+						pm.getResourcesForApplication(packageInfo.applicationInfo),
+						packageInfo.applicationInfo.icon, likelyPackage,
+						NotificationIconShrinker.ICON_SIZE);
+			} catch (NameNotFoundException e) {}
+			if (icon == null) {
+				icon = Utils.loadBitmapFromAssets(context, "play11.bmp");
+			}
+			//LCDNotification.addPersistentNotification(context, true, likelyPackage,
+			//		icon, track+" ("+artist+")");
 
 			if (!MetaWatchService.Preferences.notifyMusic)
 				return;
 
-			if (isWinamp) {
+			if (action.equals("com.nullsoft.winamp.metachanged")) {
 				NotificationBuilder.createWinamp(context, artist, track, album);				
 			} else {
 				NotificationBuilder.createMusic(context, artist, track, album);

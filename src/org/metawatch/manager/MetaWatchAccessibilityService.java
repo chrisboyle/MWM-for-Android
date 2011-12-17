@@ -1,5 +1,6 @@
 package org.metawatch.manager;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 import android.accessibilityservice.AccessibilityService;
@@ -33,10 +34,13 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		// }
 	}
 
-	// These apps should all be using the sync adapter framework instead of
+	// These apps should mostly be using the sync adapter framework insteadof
 	// pointlessly notifying me...
-	static Pattern sillyOngoings = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh)ing\\b.*",
+	static Pattern excludeTicker = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh)ing\\b.*",
 			Pattern.CASE_INSENSITIVE);
+	static Pattern excludeLine1 = Pattern.compile("USB .*", 0);
+
+	static boolean haveCMHack = false;
 
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -49,7 +53,11 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 						+ packageName + "' className = '" + className + "'");
 
 		if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-			LCDNotification.removePersistentNotifications(this, false, event.getPackageName().toString(), true);
+			if (! haveCMHack) {
+				// In the absence of a patched Android, just guess that notifications
+				// probably go away when you enter the app that sent them
+				LCDNotification.removePersistentNotifications(this, false, event.getPackageName().toString(), true);
+			}
 			return;
 		}
 
@@ -71,8 +79,9 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			// GSF might notify for other reasons, but this is a very common case:
 			// Get a better label, and match the package later to clear the icon when Talk is opened
 			packageName = "com.google.android.talk";
-		} else if (packageName.equals("org.metawatch.manager")) {
-			// Hey, that's me!
+		} else if (packageName.equals("org.metawatch.manager")
+				|| packageName.equals("com.twofortyfouram.locale")
+				|| packageName.equals("net.dinglisch.android.taskerm")) {
 			return;
 		}
 
@@ -86,35 +95,51 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		if (event.getRemovedCount() > 0) {
 			// This is my hacked CyanogenMod telling us a Notification went away
 			LCDNotification.removePersistentNotifications(this, isOngoing, event.getPackageName().toString(), true);
+			haveCMHack = true;
 			return;
 		}
 		try {
 			packageInfo = pm.getPackageInfo(packageName.toString(), 0);
-			if (notification.icon != 0) {
-				icon = NotificationIconShrinker.shrink(
-						pm.getResourcesForApplication(packageInfo.applicationInfo),
-						notification.icon, NotificationIconShrinker.ICON_SIZE,
-						NotificationIconShrinker.needsLowThreshold(packageName.toString()));
-				if (icon != null && ! isOngoing) {
-					String t = (notification.tickerText == null) ? null : notification.tickerText.toString();
-					LCDNotification.addPersistentNotification(this, false, packageName.toString(), icon, t);
-				}
-			}
-			if (isOngoing && notification.tickerText != null
-					&& ! sillyOngoings.matcher(notification.tickerText).matches()) {
-				LCDNotification.addPersistentNotification(this, true,
-						packageName.toString(), icon, notification.tickerText.toString());
-			}
 			appName = packageInfo.applicationInfo.loadLabel(pm).toString();
+			int iconId = (LCDNotification.useAppIconInstead(packageName) || notification.icon == 0)
+					? packageInfo.applicationInfo.icon
+					: notification.icon;
+			icon = NotificationIconShrinker.shrink(
+					pm.getResourcesForApplication(packageInfo.applicationInfo),
+					iconId, packageName.toString(), NotificationIconShrinker.ICON_SIZE);
 		} catch (NameNotFoundException e) {
 			/* OK, appName is null */
 		}
 
 		if (isOngoing) {
-			/* Ignore updates to ongoing events. */
-			Log.d(MetaWatch.TAG,
-					"MetaWatchAccessibilityService.onAccessibilityEvent(): Ongoing event, ignoring.");
+			String ticker = (notification.tickerText == null) ? null : notification.tickerText.toString();
+			if (ticker != null && excludeTicker.matcher(ticker).matches()) return;
+
+			List<CharSequence> l = event.getText();
+			String text = "";
+			if (LCDNotification.isMusic(packageName) && IntentReceiver.lastTrack.length() > 0) {
+				text = IntentReceiver.lastTrack + " (" + IntentReceiver.lastArtist + ")";
+			} else {
+				int firstNotTicker = (notification.tickerText != null) ? 1 : 0;
+				if (LCDNotification.shouldSkipFirstExpandedLine(packageName)) firstNotTicker++;
+				for (int i=firstNotTicker; i<l.size(); i++) {
+					String s = l.get(i).toString();
+					if (i == firstNotTicker && excludeLine1.matcher(s).matches()) return;
+					if (text.length() > 0) text += text.endsWith(".") ? " " : ". ";
+					text += s;
+				}
+				if (text.length() == 0 && ticker != null) {
+					text = ticker;
+				}
+			}
+			if (text.length() > 0) {
+				LCDNotification.addPersistentNotification(this, true,
+						packageName.toString(), icon, text);
+			}
 			return;
+		} else {
+			LCDNotification.addPersistentNotification(this, false,
+					packageName.toString(), icon, null);
 		}
 
 		if (notification.tickerText == null

@@ -19,13 +19,32 @@ class LCDNotification {
 		ongoingNotifications = new LinkedList<LCDNotification>();
 	}
 
+	static boolean isMusic(CharSequence packageName)
+	{
+		String p = packageName.toString();
+		return p.equals("com.android.music")
+				|| p.equals("com.google.android.music")
+				|| p.equals("com.htc.music")
+				|| p.equals("com.nullsoft.winamp");
+	}
+
+	static boolean useAppIconInstead(CharSequence packageName)
+	{
+		return isMusic(packageName);
+	}
+
+	static boolean shouldSkipFirstExpandedLine(CharSequence packageName) {
+		return packageName.toString().equals("com.google.android.apps.maps");
+	}
+
 	public LCDNotification(String p, Bitmap i, String t) {
 		packageName = p;
 		icon = i;
 		text = t;
 	}
 
-	static void addPersistentNotification(Context context, boolean ongoing, String packageName, Bitmap b, String s)
+	static void addPersistentNotification(Context context, boolean ongoing,
+			String packageName, Bitmap b, String s)
 	{
 		LinkedList<LCDNotification> l = ongoing ? ongoingNotifications : iconNotifications;
 		synchronized(l) {
@@ -38,7 +57,8 @@ class LCDNotification {
 		MetaWatchService.notifyClients();
 	}
 
-	static void removePersistentNotifications(Context context, boolean ongoing, String packageName, boolean notify)
+	static void removePersistentNotifications(Context context, boolean ongoing,
+			String packageName, boolean notify)
 	{
 		Log.d(MetaWatch.TAG,
 				"MetaWatchAccessibilityService.onAccessibilityEvent(): Removing notifications for "+packageName);
