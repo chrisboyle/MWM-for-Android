@@ -246,6 +246,12 @@
 			android:summary="Dense layout with notification icons"
 			android:defaultValue="true"
 			/>
+		<CheckBoxPreference
+			android:title="Big navigation instructions"
+			android:key="BigNavigation"
+			android:summary="(Receiving these at all requires patched Android)"
+			android:defaultValue="true"
+			/>
 
 	</PreferenceCategory>	
 	

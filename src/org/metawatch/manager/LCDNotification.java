@@ -16,6 +16,7 @@ class LCDNotification {
 	String packageName;
 	Bitmap icon;
 	String text;
+	boolean big;
 	private StaticLayout staticLayout;
 
 	static {
@@ -43,6 +44,19 @@ class LCDNotification {
 		return isMusic(packageName);
 	}
 
+	static String abbreviateNavigation(String text)
+	{
+		return text.replace("Turn left", "Left")
+				.replace("Turn right", "Right")
+				.replace(" the "," ")
+				.replace(" roundabout", " rdb")
+				.replace(" onto ", " on ");
+	}
+
+	static boolean isNavigation(CharSequence packageName) {
+		return packageName.toString().equals("com.google.android.apps.maps");
+	}
+
 	static boolean shouldSkipFirstExpandedLine(CharSequence packageName) {
 		return packageName.toString().equals("com.google.android.apps.maps");
 	}
@@ -63,21 +77,22 @@ class LCDNotification {
 		staticLayout.draw(c);
 	}
 
-	public LCDNotification(String p, Bitmap i, String t) {
+	public LCDNotification(String p, Bitmap i, String t, boolean big_) {
 		packageName = p;
 		icon = i;
 		text = t;
+		big = big_;
 	}
 
 	static void addPersistentNotification(Context context, boolean ongoing,
-			String packageName, Bitmap b, String s)
+			String packageName, Bitmap b, String s, boolean big)
 	{
 		LinkedList<LCDNotification> l = ongoing ? ongoingNotifications : iconNotifications;
 		synchronized(l) {
 			removePersistentNotifications(context, ongoing, packageName, false);
 			Log.d(MetaWatch.TAG,
 					"MetaWatchAccessibilityService.onAccessibilityEvent(): Adding notification for "+packageName);
-			l.addFirst(new LCDNotification(packageName, b, s));
+			l.addFirst(new LCDNotification(packageName, b, s, big));
 		}
 		Idle.updateLcdIdle(context);
 		MetaWatchService.notifyClients();

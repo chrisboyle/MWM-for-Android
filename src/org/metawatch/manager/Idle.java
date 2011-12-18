@@ -194,6 +194,19 @@ public class Idle {
 			drawLine(canvas, 47);
 
 			int y = 49;
+
+			for (LCDNotification n : LCDNotification.ongoingNotifications) {
+				if (! n.big) continue;
+				canvas.save();
+				TextPaint paint = new TextPaint(paintLarge);
+				StaticLayout layout = new StaticLayout(n.text, paint, 94,
+						android.text.Layout.Alignment.ALIGN_NORMAL, 0.9f, 0, false);
+				canvas.translate(1, y);
+				layout.draw(canvas);
+				canvas.restore();
+				y += layout.getHeight() + 1;
+			}
+
 			int pxRemain = 96 - y;
 			synchronized (LCDNotification.ongoingNotifications) {
 				int maxW = 13;
@@ -201,6 +214,7 @@ public class Idle {
 				int i=0;
 				TextPaint paint = new TextPaint(paintSmall);
 				for (LCDNotification n : LCDNotification.ongoingNotifications) {
+					if (n.big) continue;
 					int h = 0;
 					if (n.icon != null) {
 						maxW = Math.max(maxW, n.icon.getWidth());
@@ -218,6 +232,7 @@ public class Idle {
 				}
 				i = 0;
 				for (LCDNotification n : LCDNotification.ongoingNotifications) {
+					if (n.big) continue; 
 					int ih = n.icon.getHeight();
 					int th = Math.max(ih, heights[i++]);
 					if (n.icon != null) {

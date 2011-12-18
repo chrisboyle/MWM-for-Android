@@ -3,6 +3,8 @@ package org.metawatch.manager;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.metawatch.manager.MetaWatchService.Preferences;
+
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.SharedPreferences;
@@ -122,11 +124,15 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 
 			List<CharSequence> l = event.getText();
 			String text = "";
+			boolean big = false;
 			if (LCDNotification.isMusic(packageName) && IntentReceiver.lastTrack.length() > 0) {
 				text = IntentReceiver.lastTrack + " (" + IntentReceiver.lastArtist + ")";
 			} else {
 				int firstNotTicker = (notification.tickerText != null) ? 1 : 0;
 				if (firstNotTicker < l.size()) haveCMHack = true;
+				if (LCDNotification.isNavigation(packageName) && Preferences.bigNavigation) {
+					big = true;
+				}
 				if (LCDNotification.shouldSkipFirstExpandedLine(packageName)) firstNotTicker++;
 				for (int i=firstNotTicker; i<l.size(); i++) {
 					String s = l.get(i).toString().trim();
@@ -143,10 +149,13 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				if (text.length() == 0 && ticker != null) {
 					text = ticker;
 				}
+				if (LCDNotification.isNavigation(packageName)) {
+					text = LCDNotification.abbreviateNavigation(text);
+				}
 			}
 			if (text.length() > 0) {
 				LCDNotification.addPersistentNotification(this, true,
-						packageName.toString(), icon, text);
+						packageName.toString(), icon, text, big);
 			}
 			return;
 		} else {
@@ -161,7 +170,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				}
 			}
 			LCDNotification.addPersistentNotification(this, false,
-					packageName.toString(), icon, null);
+					packageName.toString(), icon, null, false);
 		}
 
 		if (notification.tickerText == null

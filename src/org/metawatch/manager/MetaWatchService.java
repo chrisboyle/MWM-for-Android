@@ -156,6 +156,7 @@ public class MetaWatchService extends Service {
 		public static boolean autoConnect = false;
 		public static boolean showK9Unread = false;
 		public static boolean denseLayout = true;
+		public static boolean bigNavigation = true;
 	}
 
 	final class WatchType {
@@ -214,6 +215,8 @@ public class MetaWatchService extends Service {
 				"ShowK9Unread", Preferences.showK9Unread);
 		Preferences.denseLayout = sharedPreferences.getBoolean(
 				"DenseLayout", Preferences.denseLayout);
+		Preferences.bigNavigation = sharedPreferences.getBoolean(
+				"BigNavigation", Preferences.bigNavigation);
 
 		try {
 			Preferences.fontSize = Integer.valueOf(sharedPreferences.getString(
