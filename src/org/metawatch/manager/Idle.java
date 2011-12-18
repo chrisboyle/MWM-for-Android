@@ -199,17 +199,17 @@ public class Idle {
 				int maxW = 13;
 				int[] heights = new int[LCDNotification.ongoingNotifications.size()];
 				int i=0;
+				TextPaint paint = new TextPaint(paintSmall);
 				for (LCDNotification n : LCDNotification.ongoingNotifications) {
 					int h = 0;
 					if (n.icon != null) {
 						maxW = Math.max(maxW, n.icon.getWidth());
 						h = n.icon.getHeight();
 					}
-					TextPaint paint = new TextPaint(paintSmall);
-					StaticLayout layout = new StaticLayout(n.text, paint, 80,
+					n._staticLayout = new StaticLayout(n.text, paint, 80,
 							android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
 							0, false);
-					heights[i++] = Math.max(h,Math.min(layout.getHeight(), pxRemain));
+					heights[i++] = Math.max(h,Math.min(n._staticLayout.getHeight(), pxRemain));
 				}
 				int maxLines = pxRemain/LINE_H + 1;
 				while (maxLines > 2 && sum(heights) > pxRemain) {
@@ -228,13 +228,26 @@ public class Idle {
 						canvas.drawBitmap(n.icon, null, new Rect(x, y, x+w, y+ih), null);
 					}
 					canvas.save();
-					TextPaint paint = new TextPaint(paintSmall);
-					StaticLayout layout = new StaticLayout(n.text, paint, 80,
-							android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
-							0, false);
 					canvas.translate(maxW + 2, y); //position the text
 					canvas.clipRect(0, 0, 80, th);
-					layout.draw(canvas);
+					if (n._staticLayout.getHeight() > th) {
+						String t;
+						int left = 3, right = n.text.length()-1, len = (left+right)/2;
+						while (left < right) {
+							t = n.text.substring(0, len-3)+"...";
+							n._staticLayout = new StaticLayout(t, paint, 80,
+									android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
+									0, false);
+							if (n._staticLayout.getHeight() > th) {
+								right = len-1;
+							} else {
+								if (left == len) break;
+								left = len;
+							}
+							len = (left+right)/2;
+						}
+					}
+					n._staticLayout.draw(canvas);
 					canvas.restore();
 					y += th + 1;
 					if (y > 96) break;

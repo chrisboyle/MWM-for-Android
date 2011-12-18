@@ -38,7 +38,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 	// pointlessly notifying me...
 	static Pattern excludeTicker = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh)ing\\b.*",
 			Pattern.CASE_INSENSITIVE);
-	static Pattern excludeLine1 = Pattern.compile("USB .*", 0);
+	static Pattern excludeLine1 = Pattern.compile("(USB|Car mode) .*", 0);
 
 	static boolean haveCMHack = false;
 
@@ -81,7 +81,8 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			packageName = "com.google.android.talk";
 		} else if (packageName.equals("org.metawatch.manager")
 				|| packageName.equals("com.twofortyfouram.locale")
-				|| packageName.equals("net.dinglisch.android.taskerm")) {
+				|| packageName.equals("net.dinglisch.android.taskerm")
+				|| packageName.equals("com.google.android.carhome")) {
 			return;
 		}
 
@@ -94,7 +95,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		Bitmap icon = null;
 		if (event.getRemovedCount() > 0) {
 			// This is my hacked CyanogenMod telling us a Notification went away
-			LCDNotification.removePersistentNotifications(this, isOngoing, event.getPackageName().toString(), true);
+			LCDNotification.removePersistentNotifications(this, isOngoing, packageName.toString(), true);
 			haveCMHack = true;
 			return;
 		}
@@ -123,9 +124,15 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				int firstNotTicker = (notification.tickerText != null) ? 1 : 0;
 				if (LCDNotification.shouldSkipFirstExpandedLine(packageName)) firstNotTicker++;
 				for (int i=firstNotTicker; i<l.size(); i++) {
-					String s = l.get(i).toString();
+					String s = l.get(i).toString().trim();
+					if (i+1 < l.size() && l.get(i+1).toString().trim().startsWith(s)) {
+						// { "ConnectBot", "ConnectBot is running" }
+						continue;
+					}
 					if (i == firstNotTicker && excludeLine1.matcher(s).matches()) return;
-					if (text.length() > 0) text += text.endsWith(".") ? " " : ". ";
+					if (text.length() > 0 && s.length() > 0 && ! text.endsWith(". ")) {
+						text += text.endsWith(".") ? " " : ". ";
+					}
 					text += s;
 				}
 				if (text.length() == 0 && ticker != null) {

@@ -5,6 +5,7 @@ import java.util.LinkedList;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.text.StaticLayout;
 import android.util.Log;
 
 class LCDNotification {
@@ -13,6 +14,7 @@ class LCDNotification {
 	String packageName;
 	Bitmap icon;
 	String text;
+	StaticLayout _staticLayout;
 
 	static {
 		iconNotifications = new LinkedList<LCDNotification>();
