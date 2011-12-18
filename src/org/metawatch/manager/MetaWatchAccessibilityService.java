@@ -166,7 +166,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				if (firstNotTicker + 1 < l.size()) {
 					NotificationBuilder.createSmart(this,
 							l.get(firstNotTicker+1).toString(),
-							l.get(firstNotTicker).toString());
+							l.get(firstNotTicker).toString(), icon);
 				}
 			}
 			LCDNotification.addPersistentNotification(this, false,

@@ -35,7 +35,7 @@ public class SendTextReceiver extends Activity {
 	        if (bundle.containsKey(Intent.EXTRA_TEXT)) {
 	           
 	        	String text = bundle.getString(Intent.EXTRA_TEXT);
-	            NotificationBuilder.createSmart(this, title, text);
+	            NotificationBuilder.createSmart(this, title, text, null);
 	            Log.d(MetaWatch.TAG, text);
 	          
 	        } 

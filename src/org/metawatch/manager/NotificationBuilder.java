@@ -69,7 +69,8 @@ public class NotificationBuilder {
 			//Notification.addBitmapNotification(context, bitmap, vibratePattern, 4000);
 			//Notification.addTextNotification(context, text, Notification.VibratePattern.NO_VIBRATE, Notification.getDefaultNotificationTimeout(context));
 			
-			Bitmap bitmap = smartNotify(context, "message.bmp", name, text);
+			Bitmap bitmap = smartNotify(context, Utils.loadBitmapFromAssets(context, "message.bmp"),
+					name, text);
 			Notification.addBitmapNotification(context, bitmap, vibratePattern, -1);
 			
 		} else {
@@ -80,11 +81,12 @@ public class NotificationBuilder {
 	}
 	
 	
-	public static void createSmart(Context context, String title, String text) {
+	public static void createSmart(Context context, String title, String text, Bitmap icon) {
 		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsOtherNotificationNumberBuzzes");
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
 			
-			Bitmap bitmap = smartNotify(context, "notify.bmp", title, text);
+			if (icon == null) icon = Utils.loadBitmapFromAssets(context, "notify.bmp");
+			Bitmap bitmap = smartNotify(context, icon, title, text);
 			Notification.addBitmapNotification(context, bitmap, vibratePattern, -1);
 			
 		} else {
@@ -250,7 +252,7 @@ public class NotificationBuilder {
 	}
 	
 	
-	static Bitmap smartNotify(Context context, String iconPath, String header, String body) {
+	static Bitmap smartNotify(Context context, Bitmap icon, String header, String body) {
 		
 		FontInfo font = FontCache.instance(context).Get();		
 		
@@ -270,14 +272,13 @@ public class NotificationBuilder {
 		
 		canvas.drawColor(Color.WHITE);
 		
-		Bitmap icon = Utils.loadBitmapFromAssets(context, iconPath);
 		
+		canvas.drawBitmap(icon, 0, Math.max(9 - icon.getHeight()/2, 0), paint);
+		int ih = Math.max(icon.getHeight(), 16);
+		canvas.drawText(header, icon.getWidth()+1, ih-2, paintHead);
 		
-		canvas.drawBitmap(icon, 0, 0, paint);
-		canvas.drawText(header, icon.getWidth()+1, icon.getHeight()-2, paintHead);
-		
-		canvas.drawLine(1, icon.getHeight(), 88, icon.getHeight(), paint);
-		canvas.drawLine(88, icon.getHeight(), 88, 95, paint);
+		canvas.drawLine(1, ih, 88, ih, paint);
+		canvas.drawLine(88, ih, 88, 95, paint);
 		
 		canvas.drawText("X", 90, 93, paint);
 		
@@ -286,7 +287,7 @@ public class NotificationBuilder {
 		StaticLayout staticLayout = new StaticLayout(body, textPaint, 86,
 				android.text.Layout.Alignment.ALIGN_NORMAL, 1.3f, 0, false);
 		
-		canvas.translate(1, icon.getHeight()+2); // position the text
+		canvas.translate(1, ih+2); // position the text
 		staticLayout.draw(canvas);
 
 		
