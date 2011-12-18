@@ -17,11 +17,15 @@ import android.view.accessibility.AccessibilityEvent;
 
 public class MetaWatchAccessibilityService extends AccessibilityService {
 
+	// in patched Android, probably not in your SDK
+	static final int TYPE_NOTIFICATION_REMOVED = 128;
+
 	@Override
 	protected void onServiceConnected() {
 		super.onServiceConnected();
 		AccessibilityServiceInfo asi = new AccessibilityServiceInfo();
 		asi.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED
+				| TYPE_NOTIFICATION_REMOVED
 				| AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
 		asi.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
 		asi.flags = AccessibilityServiceInfo.DEFAULT;
@@ -93,7 +97,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		String appName = null;
 		boolean isOngoing = (notification.flags & android.app.Notification.FLAG_ONGOING_EVENT) > 0;
 		Bitmap icon = null;
-		if (event.getRemovedCount() > 0) {
+		if (event.getEventType() == TYPE_NOTIFICATION_REMOVED) {
 			// This is my hacked CyanogenMod telling us a Notification went away
 			LCDNotification.removePersistentNotifications(this, isOngoing, packageName.toString(), true);
 			haveCMHack = true;
