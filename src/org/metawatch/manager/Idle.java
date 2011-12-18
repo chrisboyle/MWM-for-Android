@@ -194,7 +194,7 @@ public class Idle {
 			drawLine(canvas, 47);
 
 			int y = 49;
-			int pxRemain = (96 - y) + 6;  // allow partial line at bottom
+			int pxRemain = 96 - y;
 			synchronized (LCDNotification.ongoingNotifications) {
 				int maxW = 13;
 				int[] heights = new int[LCDNotification.ongoingNotifications.size()];
@@ -206,16 +206,14 @@ public class Idle {
 						maxW = Math.max(maxW, n.icon.getWidth());
 						h = n.icon.getHeight();
 					}
-					n._staticLayout = new StaticLayout(n.text, paint, 80,
-							android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
-							0, false);
-					heights[i++] = Math.max(h,Math.min(n._staticLayout.getHeight(), pxRemain));
+					int lh = n.makeTextLayout(-1, paint);
+					heights[i++] = Math.max(h,Math.min(lh, pxRemain));
 				}
 				int maxLines = pxRemain/LINE_H + 1;
 				while (maxLines > 2 && sum(heights) > pxRemain) {
 					maxLines--;
 					for (i=0; i<heights.length; i++) {
-						heights[i] = Math.min(heights[i], maxLines*LINE_H - LINE_SP);
+						heights[i] = Math.min(heights[i], maxLines*LINE_H);
 					}
 				}
 				i = 0;
@@ -230,15 +228,11 @@ public class Idle {
 					canvas.save();
 					canvas.translate(maxW + 2, y); //position the text
 					canvas.clipRect(0, 0, 80, th);
-					if (n._staticLayout.getHeight() > th) {
-						String t;
+					if (n.getTextHeight() > th) {
 						int left = 3, right = n.text.length()-1, len = (left+right)/2;
 						while (left < right) {
-							t = n.text.substring(0, len-3)+"...";
-							n._staticLayout = new StaticLayout(t, paint, 80,
-									android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
-									0, false);
-							if (n._staticLayout.getHeight() > th) {
+							int h = n.makeTextLayout(len, paint);
+							if (h > th) {
 								right = len-1;
 							} else {
 								if (left == len) break;
@@ -246,8 +240,9 @@ public class Idle {
 							}
 							len = (left+right)/2;
 						}
+						n.makeTextLayout(len, paint);
 					}
-					n._staticLayout.draw(canvas);
+					n.drawText(canvas);
 					canvas.restore();
 					y += th + 1;
 					if (y > 96) break;

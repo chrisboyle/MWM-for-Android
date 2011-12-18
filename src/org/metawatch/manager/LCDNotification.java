@@ -5,7 +5,9 @@ import java.util.LinkedList;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.Log;
 
 class LCDNotification {
@@ -14,7 +16,7 @@ class LCDNotification {
 	String packageName;
 	Bitmap icon;
 	String text;
-	StaticLayout _staticLayout;
+	private StaticLayout staticLayout;
 
 	static {
 		iconNotifications = new LinkedList<LCDNotification>();
@@ -37,6 +39,22 @@ class LCDNotification {
 
 	static boolean shouldSkipFirstExpandedLine(CharSequence packageName) {
 		return packageName.toString().equals("com.google.android.apps.maps");
+	}
+
+	int makeTextLayout(int len, TextPaint p)
+	{
+		String s = (len < 0 || len >= text.length()) ? text : text.substring(0, len-3)+"...";
+		staticLayout = new StaticLayout(s, p, 80,
+				android.text.Layout.Alignment.ALIGN_NORMAL, 1.1f,
+				0, false);
+		return staticLayout.getHeight();
+	}
+
+	int getTextHeight() { return staticLayout.getHeight(); }
+
+	void drawText(Canvas c)
+	{
+		staticLayout.draw(c);
 	}
 
 	public LCDNotification(String p, Bitmap i, String t) {
