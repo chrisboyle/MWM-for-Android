@@ -72,7 +72,7 @@ public class IntentReceiver extends BroadcastReceiver {
 			if (!MetaWatchService.Preferences.notifyGmail)
 				return;
 
-			if (!Utils.isGmailAccessSupported(context)) {
+			if (!Utils.isGmailAccessSupported(context) && ! MetaWatchAccessibilityService.haveCMHack) {
 				Bundle bundle = intent.getExtras();
 
 				/* Get recipient and count */

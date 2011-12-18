@@ -122,6 +122,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				text = IntentReceiver.lastTrack + " (" + IntentReceiver.lastArtist + ")";
 			} else {
 				int firstNotTicker = (notification.tickerText != null) ? 1 : 0;
+				if (firstNotTicker < l.size()) haveCMHack = true;
 				if (LCDNotification.shouldSkipFirstExpandedLine(packageName)) firstNotTicker++;
 				for (int i=firstNotTicker; i<l.size(); i++) {
 					String s = l.get(i).toString().trim();
@@ -145,6 +146,16 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			}
 			return;
 		} else {
+			if (LCDNotification.isGmail(packageName) && MetaWatchService.Preferences.notifyGmail) {
+				int firstNotTicker = (notification.tickerText != null) ? 1 : 0;
+				List<CharSequence> l = event.getText();
+				if (firstNotTicker < l.size()) haveCMHack = true;
+				if (firstNotTicker + 1 < l.size()) {
+					NotificationBuilder.createSmart(this,
+							l.get(firstNotTicker+1).toString(),
+							l.get(firstNotTicker).toString());
+				}
+			}
 			LCDNotification.addPersistentNotification(this, false,
 					packageName.toString(), icon, null);
 		}

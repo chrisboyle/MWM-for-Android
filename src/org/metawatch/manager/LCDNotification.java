@@ -23,6 +23,12 @@ class LCDNotification {
 		ongoingNotifications = new LinkedList<LCDNotification>();
 	}
 
+	static boolean isGmail(CharSequence packageName)
+	{
+		String p = packageName.toString();
+		return p.equals("com.google.android.gm");
+	}
+
 	static boolean isMusic(CharSequence packageName)
 	{
 		String p = packageName.toString();
