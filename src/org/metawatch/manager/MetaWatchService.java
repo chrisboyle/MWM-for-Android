@@ -702,6 +702,12 @@ public class MetaWatchService extends Service {
 					case MediaControl.VOLUME_DOWN:
 						MediaControl.volumeDown(audioManager);
 						break;
+					case MediaControl.HEADSET_PRESS:
+						MediaControl.headsetHook(context, true);
+						break;
+					case MediaControl.HEADSET_RELEASE:
+						MediaControl.headsetHook(context, false);
+						break;
 					}
 				}
 			} else if (bytes[2] == eMessageType.ReadBatteryVoltageResponse.msg) {
@@ -791,6 +797,12 @@ public class MetaWatchService extends Service {
 				break;
 			case MediaControl.TOGGLE:
 				MediaControl.togglePause(this);
+				break;
+			case MediaControl.HEADSET_PRESS:
+				MediaControl.headsetHook(context, true);
+				break;
+			case MediaControl.HEADSET_RELEASE:
+				MediaControl.headsetHook(context, false);
 				break;
 			case Protocol.REPLAY:
 				Notification.replay(this);

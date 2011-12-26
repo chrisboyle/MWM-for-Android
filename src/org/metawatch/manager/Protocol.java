@@ -504,16 +504,17 @@ public class Protocol {
 		// enableMediaButton(1); // right middle
 		// enableMediaButton(2); // right bottom
 
-		enableButton(3, 0, 0); // left bottom
-		enableButton(3, 1, MediaControl.VOLUME_DOWN); // left bottom
-		enableButton(3, 2, MediaControl.PREVIOUS); // left bottom
+		//enableButton(3, 0, 0); // left bottom
+		//enableButton(3, 1, MediaControl.VOLUME_DOWN); // left bottom
+		//enableButton(3, 2, MediaControl.PREVIOUS); // left bottom
 
 		// enableMediaButton(5, 0, 0); // left middle
-		enableButton(5, 0, MediaControl.TOGGLE); // left middle
+		enableButton(5, 0, MediaControl.HEADSET_PRESS); // left middle
+		enableButton(5, 1, MediaControl.HEADSET_RELEASE); // left middle
 
-		enableButton(6, 0, 0); // left top
-		enableButton(6, 1, MediaControl.VOLUME_UP); // left top
-		enableButton(6, 2, MediaControl.NEXT); // left top
+		//enableButton(6, 0, 0); // left top
+		//enableButton(6, 1, MediaControl.VOLUME_UP); // left top
+		//enableButton(6, 2, MediaControl.NEXT); // left top
 	}
 
 	public static void disableMediaButtons() {

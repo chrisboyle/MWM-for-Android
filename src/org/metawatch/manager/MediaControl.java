@@ -35,6 +35,8 @@ package org.metawatch.manager;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.util.Log;
+import android.view.KeyEvent;
 
 public class MediaControl {
 	
@@ -42,6 +44,8 @@ public class MediaControl {
 	final static byte VOLUME_DOWN = 11;
 	final static byte NEXT = 15;
 	final static byte PREVIOUS = 16;
+	final static byte HEADSET_PRESS = 17;
+	final static byte HEADSET_RELEASE = 18;
 	final static byte TOGGLE = 20;
 	
 	public static void next(Context context) {
@@ -56,6 +60,15 @@ public class MediaControl {
 		context.sendBroadcast(new Intent("com.android.music.musicservicecommand.togglepause"));
 	}
 	
+	public static void headsetHook(Context context, boolean pressed) {
+		Log.d(MetaWatch.TAG, "sending headset button: "+pressed);
+		Intent i =new Intent(Intent.ACTION_MEDIA_BUTTON);
+		i.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(
+				pressed ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP,
+				KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
+		context.sendOrderedBroadcast(i, null);
+	}
+
 	public static void volumeDown(AudioManager audioManager) {
 		audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0);
 	}
