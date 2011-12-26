@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
+import org.metawatch.manager.Notification.VibratePattern;
+
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
 import android.app.AlarmManager;
@@ -421,7 +423,7 @@ public class MetaWatchService extends Service {
 			if (Preferences.idleReplay)
 				Protocol.enableReplayButton();
 			else
-				Protocol.disableReplayButton();
+				Protocol.enableRTM();
 			
 			/* Notify watch on connection if requested. */
 			SharedPreferences sharedPreferences = PreferenceManager
@@ -792,6 +794,10 @@ public class MetaWatchService extends Service {
 				break;
 			case Protocol.REPLAY:
 				Notification.replay(this);
+				break;
+			case Protocol.RTM:
+				String result = RMilk.getTasksText(context);
+				NotificationBuilder.createSmart(context, "Shopping", result, null, new VibratePattern(false,0,0,0));
 				break;
 			}
 			/*

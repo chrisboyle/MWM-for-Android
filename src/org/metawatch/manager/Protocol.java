@@ -55,6 +55,7 @@ import android.util.Log;
 public class Protocol {
 
 	public static final byte REPLAY = 30;
+	public static final byte RTM = 31;
 
 	private static volatile BlockingQueue<byte[]> sendQueue = new LinkedBlockingQueue<byte[]>();
 	
@@ -487,11 +488,15 @@ public class Protocol {
 	}
 
 	public static void enableReplayButton() {
-		enableButton(1, 0, REPLAY);
+		enableButton(0, 0, REPLAY);
 	}
 
 	public static void disableReplayButton() {
-		disableButton(1, 0);
+		disableButton(0, 0);
+	}
+
+	public static void enableRTM() {
+		enableButton(0, 0, RTM);
 	}
 
 	public static void enableMediaButtons() {
