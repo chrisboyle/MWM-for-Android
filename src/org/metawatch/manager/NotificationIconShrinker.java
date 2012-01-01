@@ -83,6 +83,18 @@ public class NotificationIconShrinker
 			h = maxSize;
 			w = (int)Math.round((((double)iw)/ih)*h);
 		}
-		return Bitmap.createScaledBitmap(icon, w, h, true);
+		icon = Bitmap.createScaledBitmap(icon, w, h, true);
+
+		// There may now be grey pixels; threshold them (again)
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				if (Color.green(icon.getPixel(x, y)) > 0x7f) {
+					icon.setPixel(x, y, Color.WHITE);
+				} else {
+					icon.setPixel(x, y, Color.BLACK);
+				}
+			}
+		}
+		return icon;
 	}
 }
