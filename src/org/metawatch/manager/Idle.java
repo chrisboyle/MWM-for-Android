@@ -52,6 +52,8 @@ public class Idle {
 	
 	public static byte[] overridenButtons = null;
 
+	static Bitmap lastIdle = null;
+
 	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	static int sum(int[] a)
@@ -355,9 +357,9 @@ public class Idle {
 	}
 	
 	public static synchronized void sendLcdIdle(Context context) {
-		Bitmap bitmap = createLcdIdle(context);
+		lastIdle = createLcdIdle(context);
 		//Protocol.loadTemplate(0);		
-		Protocol.sendLcdBitmap(bitmap, MetaWatchService.WatchBuffers.IDLE);
+		Protocol.sendLcdBitmap(lastIdle, MetaWatchService.WatchBuffers.IDLE);
 		//Protocol.activateBuffer();
 		Protocol.updateDisplay(0);
 	}

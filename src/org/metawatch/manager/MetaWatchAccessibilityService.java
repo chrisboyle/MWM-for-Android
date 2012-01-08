@@ -44,7 +44,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 	// pointlessly notifying me...
 	static Pattern excludeTicker = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh)ing\\b.*",
 			Pattern.CASE_INSENSITIVE);
-	static Pattern excludeLine1 = Pattern.compile("(USB|Car mode) .*", 0);
+	static Pattern excludeLine1 = Pattern.compile("(USB|Car mode|RssDemon|RSS) .*", 0);
 
 	static boolean haveCMHack = false;
 

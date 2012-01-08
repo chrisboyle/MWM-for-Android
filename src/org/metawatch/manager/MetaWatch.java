@@ -50,12 +50,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -63,6 +67,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.bugsense.trace.BugSenseHandler;
@@ -74,6 +80,7 @@ public class MetaWatch extends Activity {
 	private TextView textView;
 	private Button buttonStart;
 	private Button buttonStop;
+	private ImageView watchView;
 	
 	/** Messenger for communicating with service. */
     Messenger mService = null;
@@ -101,7 +108,7 @@ public class MetaWatch extends Activity {
 		}
                    
         textView = (TextView) findViewById(R.id.textview);
-        
+        watchView = (ImageView) findViewById(R.id.watchView);
     }
 
 	@Override
@@ -238,7 +245,7 @@ public class MetaWatch extends Activity {
 						"<h1>MetaWatch</h1>" +
 						"<p>Version " + Utils.getVersion(this) + ".</p>" +
 						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver and Richard Munn.</p>" +
-						"<p>© Copyright 2011 Meta Watch Ltd.</p>" +
+						"<p>&copy; Copyright 2011 Meta Watch Ltd.</p>" +
 						"</body></html>";
         webView.loadData(html, "text/html", "utf-8");
         
@@ -268,7 +275,19 @@ public class MetaWatch extends Activity {
     
     private void displayStatus() {
     	textView.setText("MetaWatch Manager\n\n");
-    	
+
+		if (Idle.lastIdle != null) {
+			Canvas c = new Canvas(Idle.lastIdle);
+			Paint p = new Paint();
+			p.setColor(Color.GRAY);
+			c.drawRect(0,0,96,30, p);
+			p.setColor(Color.BLACK);
+			p.setTextSize(8);
+			p.setTextAlign(Paint.Align.CENTER);
+			c.drawText("(time drawn by watch)", 48, 17, p);
+			watchView.setImageBitmap(Idle.lastIdle);
+		}
+
     	switch (MetaWatchService.connectionState) {
 	    	case MetaWatchService.ConnectionState.DISCONNECTED:
 	    		textView.append("DISCONNECTED\n");
