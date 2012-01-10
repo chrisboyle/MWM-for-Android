@@ -27,7 +27,8 @@ public class RMilk
 			AUTH_URL = "https://www.rememberthemilk.com/services/auth/",
 			API_KEY = null,
 			SECRET = null,
-			TOKEN = null;
+			TOKEN = null,
+			LIST_ID = null;
 
 	static {
 		// Work around http://code.google.com/p/android/issues/detail?id=2939
@@ -41,7 +42,7 @@ public class RMilk
 		TreeMap<String,String> args = new TreeMap<String,String>();
 		JSONObject o;
 		try {
-			return "Not implemented";
+			if (API_KEY == null) return "No API key";
 			/*args.clear();
 			args.put("method", "rtm.auth.getFrob");
 			o = call(args);
@@ -71,18 +72,25 @@ public class RMilk
 			String list_id = o.getJSONObject("rsp").getJSONObject("lists").getJSONArray("list")
 					.getJSONObject(0).getString("id"); */
 			// we have a list id
-			/*args.clear();
+			args.clear();
 			args.put("method", "rtm.tasks.getList");
 			args.put("list_id", LIST_ID);  // or "list:Supermarket" in the filter
 			args.put("filter", "status:incomplete");
 			o = call(args);
-			JSONArray a = o.getJSONObject("rsp").getJSONObject("tasks")
-					.getJSONArray("list").getJSONObject(0).getJSONArray("taskseries");
+			JSONArray list = o.getJSONObject("rsp").getJSONObject("tasks")
+					.optJSONArray("list");
+			if (list == null) return "(no tasks)";
+			JSONArray a = list.getJSONObject(0).optJSONArray("taskseries");
+			if (a == null) {
+				// Silly one-task case
+				a = new JSONArray();
+				a.put(list.getJSONObject(0).getJSONObject("taskseries"));
+			}
 			String ret = "";
 			for (int i=0; i<a.length(); i++) {
 				ret += "- " + a.getJSONObject(i).getString("name") + "\n";
 			}
-			return ret;*/
+			return ret;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return e.toString();
