@@ -118,20 +118,25 @@ public class Idle {
 		paintLarge.setTypeface(FontCache.instance(context).Large.face);
 		
 		canvas.drawColor(Color.WHITE);
-		
-		canvas = drawLine(canvas, 31);
+
+		int y = 31;
+		if (Preferences.dividers) {
+			canvas = drawLine(canvas, y);
+			y += 3;
+		}
+
 		int xAfterWeather = 1;
 		if( currentPage == 0 && !Preferences.disableWeather) {
 			if (Preferences.denseLayout) {
 				if (WeatherData.received) {
 
-					canvas.drawText(WeatherData.temp, 2, 45, paintLarge);
+					canvas.drawText(WeatherData.temp, 2, y+11, paintLarge);
 					int x = (int)Math.ceil(3 + paintLarge.measureText(WeatherData.temp) +
 							Math.max(paintSmall.measureText(WeatherData.tempHigh),
 									paintSmall.measureText(WeatherData.tempLow)));
 					paintSmall.setTextAlign(Paint.Align.RIGHT);
-					canvas.drawText(WeatherData.tempHigh, x, 39, paintSmall);
-					canvas.drawText(WeatherData.tempLow,  x, 45, paintSmall);
+					canvas.drawText(WeatherData.tempHigh, x, y+5, paintSmall);
+					canvas.drawText(WeatherData.tempLow,  x, y+11, paintSmall);
 					paintSmall.setTextAlign(Paint.Align.LEFT);
 					xAfterWeather = x + 1;
 
@@ -139,16 +144,16 @@ public class Idle {
 					if (Preferences.weatherGeolocation) {
 						if( !LocationData.received ) {
 							// 13x13
-							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_gps.bmp"), 1, 33, null);
+							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_gps.bmp"), 1, y-1, null);
 							xAfterWeather = 15;
 						} else {
 							// 14x13
-							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_data.bmp"), 1, 33, null);
+							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_data.bmp"), 1, y-1, null);
 							xAfterWeather = 16;
 						}
 					} else {
 						// 23x12
-						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "weather_unknown.bmp"), 1, 34, null);
+						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "weather_unknown.bmp"), 1, y, null);
 						xAfterWeather = 25;
 					}
 				}
@@ -216,7 +221,9 @@ public class Idle {
 				//String currentTimeString = new SimpleDateFormat("HH:mm").format(new Date());
 				//canvas.drawText(currentTimeString, 0, 56, paintSmall);
 				
-				canvas = drawLine(canvas, 64);
+				if (Preferences.dividers) {
+					canvas = drawLine(canvas, 64);
+				}
 			}
 			
 		}	
@@ -231,15 +238,19 @@ public class Idle {
 					// They're already scaled to (mostly) 13 pixels high; width varies
 					int w = n.icon.getWidth();
 					int h = n.icon.getHeight();
-					int y = 39-h/2;
-					canvas.drawBitmap(n.icon, null, new Rect(x, y, x+w, y+h), null);
+					int iy = y + 5 - h/2;
+					canvas.drawBitmap(n.icon, null, new Rect(x, iy, x+w, iy+h), null);
 					x += w + 1;
 					if (x > 96) break;
 				}
 			}
-			drawLine(canvas, 47);
 
-			int y = 49;
+			y += 13;
+
+			if (Preferences.dividers) {
+				drawLine(canvas, y);
+				y += 2;
+			}
 
 			for (LCDNotification n : LCDNotification.ongoingNotifications) {
 				if (! n.big) continue;
@@ -375,7 +386,9 @@ public class Idle {
 			canvas.drawText(count, countX, !Preferences.disableWeather ? 92 : 62, paintSmall);
 		}
 		if(Preferences.disableWeather) {
-			canvas = drawLine(canvas, 64);
+			if (Preferences.dividers) {
+				canvas = drawLine(canvas, 64);
+			}
 			//Add more icons here in future.
 		}
 		

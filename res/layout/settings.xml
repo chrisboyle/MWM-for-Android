@@ -276,6 +276,12 @@
 			android:summary="(Receiving these at all requires patched Android)"
 			android:defaultValue="true"
 			/>
+		<CheckBoxPreference
+			android:title="Dividers"
+			android:key="Dividers"
+			android:summary="Dotted horizontal lines between sections"
+			android:defaultValue="false"
+			/>
 
 	</PreferenceCategory>	
 	
