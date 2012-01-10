@@ -303,7 +303,8 @@ public class NotificationBuilder {
 
 		int h = staticLayout.getHeight();
 		int y = 0;
-		int displayHeight = 96 - icon.getHeight()+2;
+		int ih = Math.max(icon.getHeight(), 16);
+		int displayHeight = 96 - ih+2;
 		
 		int scroll = 72;
 		boolean more = true;
@@ -316,19 +317,19 @@ public class NotificationBuilder {
 			canvas.drawColor(Color.WHITE);
 			
 			canvas.save();
-			canvas.translate(1, icon.getHeight()+2 - y); // position the text
+			canvas.translate(1, ih+2 - y); // position the text
 			staticLayout.draw(canvas);
 			canvas.restore();
 			
 			// Draw header
-			canvas.drawRect(new android.graphics.Rect(0,0,96,icon.getHeight()), whitePaint);
-			canvas.drawBitmap(icon, 0, 0, paint);
-			canvas.drawText(header, icon.getWidth()+1, icon.getHeight()-2, paintHead);
+			canvas.drawRect(new android.graphics.Rect(0,0,96,ih), whitePaint);
+			canvas.drawBitmap(icon, 0, Math.max(9 - icon.getHeight()/2, 0), paint);
+			canvas.drawText(header, icon.getWidth()+1, ih-2, paintHead);
 			
 			//canvas.drawText(""+(h-y)+" "+displayHeight, icon.getWidth()+1, icon.getHeight()-2, paintHead);
 			
-			canvas.drawLine(1, icon.getHeight(), 88, icon.getHeight(), paint);
-			canvas.drawLine(88, icon.getHeight(), 88, 95, paint);
+			canvas.drawLine(1, ih, 88, ih, paint);
+			canvas.drawLine(88, ih, 88, 95, paint);
 			
 			if (y>0)
 				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "arrow_up.bmp"), 90, 17, null);
