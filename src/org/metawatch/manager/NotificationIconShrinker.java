@@ -34,6 +34,10 @@ public class NotificationIconShrinker
 				: 0x7f;
 	}
 
+	public static boolean shouldInvert(String packageName) {
+		return packageName.equals("com.fsck.k9");
+	}
+
 	public static Bitmap shrink(Resources r, int iconId, String packageName, int maxSize)
 	{
 		Drawable d = null;
@@ -63,6 +67,7 @@ public class NotificationIconShrinker
 		// Threshold to monochrome (for LCD), and create a bounding box
 		double thresholdLum = maxLum * chooseThreshold(packageName);
 		int minX = iw, maxX = 0, minY = ih, maxY = 0;
+		boolean inv = shouldInvert(packageName);
 		for (int y = 0; y < ih; y++) {
 			for (int x = 0; x < iw; x++) {
 				if (luminance(icon.getPixel(x,y)) >= thresholdLum) {
@@ -70,9 +75,9 @@ public class NotificationIconShrinker
 					maxX = Math.max(maxX, x);
 					minY = Math.min(minY, y);
 					maxY = Math.max(maxY, y);
-					icon.setPixel(x, y, Color.BLACK);
+					icon.setPixel(x, y, inv ? Color.WHITE : Color.BLACK);
 				} else {
-					icon.setPixel(x, y, Color.WHITE);
+					icon.setPixel(x, y, inv ? Color.BLACK : Color.WHITE);
 				}
 			}
 		}
