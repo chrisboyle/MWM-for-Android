@@ -32,41 +32,67 @@
 
 package org.metawatch.manager;
 
+import org.metawatch.manager.MetaWatchService.Preferences;
+
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.util.Log;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 
 public class MediaControl {
+	
+	final static int MEDIACONTROL_MUSICSERVICECOMMAND = 0;
+	final static int MEDIACONTROL_EMULATE_HEADSET = 1;
 	
 	final static byte VOLUME_UP = 10;
 	final static byte VOLUME_DOWN = 11;
 	final static byte NEXT = 15;
 	final static byte PREVIOUS = 16;
-	final static byte HEADSET_PRESS = 17;
-	final static byte HEADSET_RELEASE = 18;
+	final static byte HEADSET = 17;
 	final static byte TOGGLE = 20;
 	
 	public static void next(Context context) {
-		context.sendBroadcast(new Intent("com.android.music.musicservicecommand.next"));
+		if (Preferences.idleMusicControlMethod == MEDIACONTROL_MUSICSERVICECOMMAND){
+			context.sendBroadcast(new Intent("com.android.music.musicservicecommand.next"));
+		}
+		else {
+			sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_NEXT);
+		}
 	}
 	
 	public static void previous(Context context) {
-		context.sendBroadcast(new Intent("com.android.music.musicservicecommand.previous"));
+		if (Preferences.idleMusicControlMethod == MEDIACONTROL_MUSICSERVICECOMMAND){
+			context.sendBroadcast(new Intent("com.android.music.musicservicecommand.previous"));
+		}
+		else {
+			sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS);
+		}
 	}
 	
 	public static void togglePause(Context context) {
-		context.sendBroadcast(new Intent("com.android.music.musicservicecommand.togglepause"));
+		if (Preferences.idleMusicControlMethod == MEDIACONTROL_MUSICSERVICECOMMAND){
+			context.sendBroadcast(new Intent("com.android.music.musicservicecommand.togglepause"));
+		}
+		else {
+			sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+		}
 	}
-	
-	public static void headsetHook(Context context, boolean pressed) {
-		Log.d(MetaWatch.TAG, "sending headset button: "+pressed);
-		Intent i =new Intent(Intent.ACTION_MEDIA_BUTTON);
-		i.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(
-				pressed ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP,
-				KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
-		context.sendOrderedBroadcast(i, null);
+
+	public static void headsetHook(Context context) {
+		sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+	}
+
+	public static void AnswerCall(Context context) {
+		sendMediaButtonEvent(context, KeyEvent.KEYCODE_HEADSETHOOK, "android.permission.CALL_PRIVILEGED");
+	}
+
+	public static void DismissCall(Context context) {
+		sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+	}
+
+	public static void ToggleSpeakerphone(AudioManager audioManager) {
+		audioManager.setSpeakerphoneOn(!audioManager.isSpeakerphoneOn());
 	}
 
 	public static void volumeDown(AudioManager audioManager) {
@@ -75,5 +101,24 @@ public class MediaControl {
 	
 	public static void volumeUp(AudioManager audioManager) {
 		audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+	}
+	
+
+	private static void sendMediaButtonEvent(Context context, int keyCode)
+	{
+		sendMediaButtonEvent(context, keyCode, null);
+	}
+	
+	private static void sendMediaButtonEvent(Context context, int keyCode, String permission)
+	{
+		long time = SystemClock.uptimeMillis();
+		Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+		KeyEvent downEvent = new KeyEvent(time, time, KeyEvent.ACTION_DOWN, keyCode, 0);
+		downIntent.putExtra(Intent.EXTRA_KEY_EVENT, downEvent);
+		context.sendOrderedBroadcast(downIntent, permission);
+		Intent upIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+		KeyEvent upEvent = new KeyEvent(time, time, KeyEvent.ACTION_UP, keyCode, 0);
+		upIntent.putExtra(Intent.EXTRA_KEY_EVENT, upEvent);
+		context.sendOrderedBroadcast(upIntent, permission);
 	}
 }

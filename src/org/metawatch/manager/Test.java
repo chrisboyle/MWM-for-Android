@@ -50,8 +50,6 @@ import android.view.MenuItem;
 
 public class Test extends Activity {
 	
-	final String ipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae varius felis. Ut consectetur pharetra tincidunt. Suspendisse sed nisl auctor nunc pellentesque pretium et eu ipsum. Quisque ut tellus vel sem sodales dapibus. Vestibulum aliquet tempor ante nec faucibus. Curabitur sed quam nec libero tincidunt vehicula. Etiam facilisis orci in arcu ultricies porta. In id erat odio. Aliquam lacinia, velit ut fringilla pulvinar, massa risus auctor justo, eget suscipit tellus quam ac ligula.\n\nPraesent suscipit, ipsum sed tristique elementum, felis neque porttitor tellus, eu ornare tellus felis nec libero. Nam sit amet diam felis. Integer sed quam dui. Etiam id leo eu diam consequat vehicula at eu augue. Pellentesque fermentum massa in neque feugiat in venenatis nisl pulvinar. Ut eu turpis odio. Fusce nec odio commodo odio ornare cursus. Nullam mattis, elit eget feugiat dignissim, ipsum tellus dapibus dui, in hendrerit ipsum orci vel augue. Vivamus ac felis nisl. Curabitur facilisis ultricies nulla, sed dictum elit auctor eu. Pellentesque sagittis nisi eu risus blandit interdum. Nulla ipsum odio, semper a sodales at, venenatis sit amet massa. Etiam ac auctor odio. Curabitur massa quam, malesuada in pharetra vel, aliquam sit amet felis";
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
@@ -99,13 +97,17 @@ public class Test extends Activity {
 	    		Application.stopAppMode(this);
 	        return true;
 	    case R.id.sms:	   
-	    	NotificationBuilder.createSMS(this, "555-123-456", "Rights groups report systematic state violence is being unleashed on Bahrain's opposition movement.");
+	    	String smsText = "";
+	    	for(int i=0;i<20;++i) {
+	    		smsText += "SMS Line "+i+"\n";
+	    	}
+	    	NotificationBuilder.createSMS(this, "555-123-456", smsText);
 	        return true;
 	    case R.id.testShortMessage:	   
 	    	NotificationBuilder.createSMS(this, "555-123-456", "Hi.");
 	        return true;
 	    case R.id.k9:	   
-	    	NotificationBuilder.createK9(this, "doctor@gallifrey.net", "Would you like a jelly baby?");
+	    	NotificationBuilder.createK9(this, "The Doctor <doctor@gallifrey.net>", "Now drop your weapons, or I'll kill him with this deadly jelly baby!", "tardis:INBOX");
 	        return true;
 	    case R.id.gmail_short:	   
 	    	NotificationBuilder.createGmailBlank(this, "me@gmail.com", 513);
@@ -171,6 +173,15 @@ public class Test extends Activity {
 			Protocol.sendLcdBitmap(Protocol.createTextBitmap(this, "abc"), true);
 			Protocol.updateDisplay(2);
 			*/
+
+	    	//Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+	    	//KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_NEXT);
+	    	//intent.putExtra(Intent.EXTRA_KEY_EVENT, event);
+	    	//sendOrderedBroadcast(intent, null);
+	    	
+	    	Protocol.stopProtocolSender();
+
+	    	
 	    }
 	        return true;
 	        
@@ -199,7 +210,32 @@ public class Test extends Activity {
 				e.printStackTrace();
 			}
 	    	return true;
-	    	    	
+	    	
+	    case R.id.led_on:
+	    	Protocol.ledChange(true);
+	    	return true;
+
+	    case R.id.led_off:
+	    	Protocol.ledChange(false);
+	    	return true;
+	    	
+	    case R.id.time_24hr:
+	    	Protocol.setNvalTime(true);
+	    	NotificationBuilder.createOtherNotification(this, "", "You'll need to reset your watch for this to take effect.");
+	    	return true;
+	    	
+	    case R.id.media_next:
+	    	MediaControl.next(this);
+	    	return true;
+	    	
+	    case R.id.media_previous:
+	    	MediaControl.previous(this);
+	    	return true;
+	    	
+	    case R.id.media_togglepause:
+	    	MediaControl.togglePause(this);
+	    	return true;
+	    		    	
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
@@ -214,6 +250,9 @@ public class Test extends Activity {
 	}
 	
 	void stopSmsTestLoop() {
-		MetaWatchService.testSmsLoop.stop();
+		if (MetaWatchService.testSmsLoop != null)
+			MetaWatchService.testSmsLoop.stop();
 	}
+	
+
 }

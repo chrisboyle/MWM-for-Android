@@ -59,7 +59,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.text.format.Time;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -70,6 +70,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 
@@ -244,8 +245,8 @@ public class MetaWatch extends Activity {
 		String html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /><title>About</title></head><body>" + 
 						"<h1>MetaWatch</h1>" +
 						"<p>Version " + Utils.getVersion(this) + ".</p>" +
-						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver and Richard Munn.</p>" +
-						"<p>&copy; Copyright 2011 Meta Watch Ltd.</p>" +
+						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn and Chris Boyle.</p>" +
+						"<p>© Copyright 2011-2012 Meta Watch Ltd.</p>" +
 						"</body></html>";
         webView.loadData(html, "text/html", "utf-8");
         
@@ -329,16 +330,27 @@ public class MetaWatch extends Activity {
     		}
     	}
     	
-    	textView.append("\nMessage Queue Length " + Protocol.getQueueLength() + "\n");
-    	
-    	
+    	textView.append("\nMessage Queue Length: " + Protocol.getQueueLength());
+    	textView.append("\nNotification Queue Length: " + Notification.getQueueLength() + "\n");
+    	if (Protocol.isStalled()) {
+    		if (MetaWatchService.connectionState == MetaWatchService.ConnectionState.CONNECTED) {
+	    		textView.append("\n**CONNECTION STALLED**\n");
+	    		if (Preferences.autoRestart) {
+		    		Toast.makeText(this, "Restarting stalled connection", Toast.LENGTH_SHORT);
+		    		Protocol.resetStalledFlag();
+		    		stopService();
+		    		startService();
+		    		Log.d(MetaWatch.TAG, "Restarted stalled service");
+	    		}
+    		}
+    	}	
     }
     
     private void printDate(long ticks) {
     	final Calendar cal = Calendar.getInstance();
     	cal.setTimeInMillis(ticks);
     	Date date = cal.getTime();
-    	textView.append(date.toLocaleString());
+    	textView.append(DateFormat.getDateFormat(this).format(date)+" "+DateFormat.getTimeFormat(this).format(date));
     	textView.append("\n");
     }
     
@@ -368,21 +380,9 @@ public class MetaWatch extends Activity {
                         MetaWatchService.Msg.REGISTER_CLIENT);
                 msg.replyTo = mMessenger;
                 mService.send(msg);
-
-                //// Give it some value as an example.
-                //msg = Message.obtain(null,
-                //        MessengerService.MSG_SET_VALUE, this.hashCode(), 0);
-                //mService.send(msg);
             } catch (RemoteException e) {
-                // In this case the service has crashed before we could even
-                // do anything with it; we can count on soon being
-                // disconnected (and then reconnected if it can be restarted)
-                // so there is no need to do anything here.
-            }
 
-            // As part of the sample, tell the user what happened.
-            //Toast.makeText(Binding.this, R.string.remote_service_connected,
-            //        Toast.LENGTH_SHORT).show();
+            }
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -390,10 +390,6 @@ public class MetaWatch extends Activity {
             // unexpectedly disconnected -- that is, its process crashed.
             mService = null;
             textView.append("Disconnected from service\n");
-
-            //// As part of the sample, tell the user what happened.
-            //Toast.makeText(Binding.this, R.string.remote_service_disconnected,
-            //        Toast.LENGTH_SHORT).show();
         }
     };
 

@@ -201,6 +201,20 @@
 			android:summary="Display notification text centered"
 			android:defaultValue="false"
 			/>
+			
+		<CheckBoxPreference
+			android:title="Auto light on notify"
+			android:key="notifyLight"
+			android:summary="Enable the light when a notification or incoming call is displayed"
+			android:defaultValue="false"
+			/>
+			
+		<CheckBoxPreference
+			android:title="Sticky Notifications"
+			android:key="stickyNotifications"
+			android:summary="Use sticky notifications (that stay on screen until manually dismissed)"
+			android:defaultValue="true"
+			/>
 				
 	</PreferenceCategory>
 
@@ -234,6 +248,16 @@
 			android:summary="Enable music controls on Idle screen"
 			android:defaultValue="false"
 			/>
+		<ListPreference 
+			android:entries="@array/settings_media_control_method_names" 
+			android:entryValues="@array/settings_media_control_method_values" 
+			android:dialogTitle="Media Control Method" 
+			android:key="IdleMusicControlMethod" 
+			android:title="Media Control Method" 
+			android:negativeButtonText="Cancel" 
+ 			android:enabled="true" 
+ 			android:defaultValue="0"
+ 			/>	
 		<CheckBoxPreference
 			android:title="Invert LCD"
 			android:key="InvertLCD"
@@ -362,6 +386,12 @@
             android:summary="Send a notification to the watch after connecting to it"
             android:defaultValue="false"
             />
+        <CheckBoxPreference
+			android:title="Restart if stalled"
+			android:key="AutoRestart"
+			android:summary="Automatically restart the service if it becommes stalled."
+			android:defaultValue="false"
+			/>	
 			
 	</PreferenceCategory>	
 

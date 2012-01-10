@@ -60,6 +60,9 @@ public class Utils {
 		Uri contactUri = Uri.withAppendedPath(PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
 		Cursor c = context.getContentResolver().query(contactUri, projection, null, null, null);
 		
+		if (c==null)
+			return number;
+		
 		if (c.moveToFirst()) {
 			String name = c.getString(c.getColumnIndex(PhoneLookup.DISPLAY_NAME));
 
@@ -69,27 +72,32 @@ public class Utils {
 				return number;
 		}
 		
+		c.close();
 		return number;		 
 	}
 	
 	public static int getUnreadSmsCount(Context context) {
 
 		int count = 0;
-
-		Cursor cursor = context.getContentResolver().query(
-				Uri.withAppendedPath(Uri.parse("content://sms"), "inbox"), 
-				new String[] { "_id" }, 
-				"read=0", 
-				null, 
-				null
-			);
-		
-		if (cursor != null) {
-			try {
-				count = cursor.getCount();
-			} finally {
-				cursor.close();
+		try {
+			Cursor cursor = context.getContentResolver().query(
+					Uri.withAppendedPath(Uri.parse("content://sms"), "inbox"), 
+					new String[] { "_id" }, 
+					"read=0", 
+					null, 
+					null
+				);
+			
+			if (cursor != null) {
+				try {
+					count = cursor.getCount();
+				} finally {
+					cursor.close();
+				}
 			}
+		}
+		catch (java.lang.IllegalStateException e) {
+			Log.d(MetaWatch.TAG, "Failed to query SMS content provider");
 		}
 		return count;
 	}
@@ -244,6 +252,9 @@ public class Utils {
 		}
 		catch (IllegalStateException e) {
 			Log.d(MetaWatch.TAG, "k-9 accounts uri unknown.");
+		}
+		catch (java.lang.SecurityException e) {
+			Log.d(MetaWatch.TAG, "Permissions failure accessing k-9 databases");
 		}
 		return 0;
 

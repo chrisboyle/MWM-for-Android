@@ -51,6 +51,41 @@ import android.util.Log;
 public class Idle {
 	
 	public static byte[] overridenButtons = null;
+	
+	final static byte IDLE_NEXT_PAGE = 60;
+
+	final static int NUM_PAGES = 1;
+	static int currentPage = 0;
+	
+	public static void NextPage() {
+		currentPage = (currentPage+1) % NUM_PAGES;
+	}
+	
+	static void drawWrappedText(String text, Canvas canvas, int x, int y, int width, TextPaint paint) {
+		canvas.save();
+		StaticLayout layout = new StaticLayout(text, paint, width, android.text.Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
+		canvas.translate(x, y); //position the text
+		layout.draw(canvas);
+		canvas.restore();	
+	}
+	
+	static void drawOutlinedText(String text, Canvas canvas, int x, int y, TextPaint col, TextPaint outline) {
+		canvas.drawText(text, x+1, y, outline);
+		canvas.drawText(text, x-1, y, outline);
+		canvas.drawText(text, x, y+1, outline);
+		canvas.drawText(text, x, y-1, outline);
+	
+		canvas.drawText(text, x, y, col);
+	}
+	
+	static void drawWrappedOutlinedText(String text, Canvas canvas, int x, int y, int width, TextPaint col, TextPaint outline) {
+		drawWrappedText(text, canvas, x-1, y, width, outline);
+		drawWrappedText(text, canvas, x+1, y, width, outline);
+		drawWrappedText(text, canvas, x, y-1, width, outline);
+		drawWrappedText(text, canvas, x, y+1, width, outline);
+		
+		drawWrappedText(text, canvas, x, y, width, col);
+	}
 
 	static Bitmap lastIdle = null;
 
@@ -72,6 +107,11 @@ public class Idle {
 		paintSmall.setTextSize(FontCache.instance(context).Small.size);
 		paintSmall.setTypeface(FontCache.instance(context).Small.face);
 		
+		TextPaint paintSmallOutline = new TextPaint();
+		paintSmallOutline.setColor(Color.WHITE);
+		paintSmallOutline.setTextSize(FontCache.instance(context).Small.size);
+		paintSmallOutline.setTypeface(FontCache.instance(context).Small.face);
+		
 		TextPaint paintLarge = new TextPaint();
 		paintLarge.setColor(Color.BLACK);
 		paintLarge.setTextSize(FontCache.instance(context).Large.size);
@@ -81,7 +121,7 @@ public class Idle {
 		
 		canvas = drawLine(canvas, 31);
 		int xAfterWeather = 1;
-		if(!Preferences.disableWeather) {
+		if( currentPage == 0 && !Preferences.disableWeather) {
 			if (Preferences.denseLayout) {
 				if (WeatherData.received) {
 
@@ -115,19 +155,19 @@ public class Idle {
 
 			} else {
 				if (WeatherData.received) {
-
+					
+					//WeatherData.icon = "weather_sunny.bmp";
+					//WeatherData.locationName = "a really long place name";
+					//WeatherData.condition = "cloudy with a chance of meatballs";
+					
 					// icon
 					Bitmap image = Utils.loadBitmapFromAssets(context, WeatherData.icon);
 					canvas.drawBitmap(image, 36, 37, null);
-
+					
 					// condition
-					canvas.save();
-					TextPaint paint = new TextPaint(paintSmall);
-					StaticLayout layout = new StaticLayout(WeatherData.condition, paint, 60, android.text.Layout.Alignment.ALIGN_NORMAL, 1.3f, 0, false);
-					canvas.translate(1, 35); //position the text
-					layout.draw(canvas);
-					canvas.restore();								
-
+					drawWrappedOutlinedText(WeatherData.condition, canvas, 1, 35, 60, paintSmall, paintSmallOutline);
+					
+					
 					// temperatures
 					if (WeatherData.celsius) {
 						paintLarge.setTextAlign(Paint.Align.RIGHT);
@@ -144,42 +184,46 @@ public class Idle {
 						canvas.drawText("F", 95, 46, paintLarge);
 					}
 					paintLarge.setTextAlign(Paint.Align.LEFT);
-
+								
 					canvas.drawText("High", 64, 54, paintSmall);
 					canvas.drawText("Low", 64, 62, paintSmall);
-
+					
 					paintSmall.setTextAlign(Paint.Align.RIGHT);
 					canvas.drawText(WeatherData.tempHigh, 95, 54, paintSmall);
 					canvas.drawText(WeatherData.tempLow, 95, 62, paintSmall);
 					paintSmall.setTextAlign(Paint.Align.LEFT);
-
-					canvas.drawText((String) TextUtils.ellipsize(WeatherData.locationName, paintSmall, 63, TruncateAt.END), 1, 62, paintSmall);
-
+	
+					drawOutlinedText((String) TextUtils.ellipsize(WeatherData.locationName, paintSmall, 63, TruncateAt.END), canvas, 1, 62, paintSmall, paintSmallOutline);
+								
 				} else {
 					paintSmall.setTextAlign(Paint.Align.CENTER);
 					if (Preferences.weatherGeolocation) {
 						if( !LocationData.received ) {
-							canvas.drawText("awaiting location", 48, 50, paintSmall);
+							canvas.drawText("Awaiting location", 48, 50, paintSmall);
 						}
 						else {
-							canvas.drawText("awaiting weather", 48, 50, paintSmall);
+							canvas.drawText("Awaiting weather", 48, 50, paintSmall);
 						}
 					}
 					else {
-						canvas.drawText("no data", 48, 50, paintSmall);
+						canvas.drawText("No data", 48, 50, paintSmall);
 					}
 					paintSmall.setTextAlign(Paint.Align.LEFT);
 				}
-
+							
 				// Debug current time
 				//String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
 				//String currentTimeString = new SimpleDateFormat("HH:mm").format(new Date());
 				//canvas.drawText(currentTimeString, 0, 56, paintSmall);
-
+				
 				canvas = drawLine(canvas, 64);
 			}
-		}
-
+			
+		}	
+		//else if (currentPage == 1) {
+		//	canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "test.bmp"), 0, 32, null);
+		//}
+		
 		if (Preferences.denseLayout) {
 			int x = xAfterWeather;
 			synchronized (LCDNotification.iconNotifications) {
@@ -302,7 +346,7 @@ public class Idle {
 			String count = "";
 			switch (i) {
 				case 0:
-					count = Integer.toString(Utils.getMissedCallsCount(context));					
+					count = Integer.toString(Utils.getMissedCallsCount(context));	
 					break;
 				case 1:
 					count = Integer.toString(Utils.getUnreadSmsCount(context));
@@ -323,9 +367,9 @@ public class Idle {
 					}
 					break;				
 			}
-			
+					
 			int slotSpace = 96/rows;
-			int slotX = (int) (slotSpace/2-paintSmall.measureText(count)/2);
+			int slotX = (int) (slotSpace/2-paintSmall.measureText(count)/2)+1;
 			int countX = slotSpace*i + slotX;
 			
 			canvas.drawText(count, countX, !Preferences.disableWeather ? 92 : 62, paintSmall);
@@ -374,6 +418,10 @@ public class Idle {
 			sendLcdIdle(context);
 			//Protocol.updateDisplay(0);
 		}
+		
+		if (NUM_PAGES>1)
+			Protocol.enableButton(0, 0, IDLE_NEXT_PAGE, 0); // Right top
+
 		
 		return true;
 	}

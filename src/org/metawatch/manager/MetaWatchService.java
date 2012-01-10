@@ -145,6 +145,8 @@ public class MetaWatchService extends Service {
 		public static boolean skipSDP = false;
 		public static boolean invertLCD = false;
 		public static boolean notificationCenter = false;
+		public static boolean notifyLight = false;
+		public static boolean stickyNotifications = true;
 		public static String weatherCity = "Dallas,US";
 		public static boolean weatherCelsius = false;
 		public static boolean weatherGeolocation = false;
@@ -152,10 +154,12 @@ public class MetaWatchService extends Service {
 		public static int fontSize = 2;
 		public static int smsLoopInterval = 15;
 		public static boolean idleMusicControls = false;
+		public static int idleMusicControlMethod = MediaControl.MEDIACONTROL_MUSICSERVICECOMMAND;
 		public static boolean idleReplay = false;
 		public static boolean notificationLarger = false;
 		public static boolean disableWeather = false;
 		public static boolean autoConnect = false;
+		public static boolean autoRestart = false;
 		public static boolean showK9Unread = false;
 		public static boolean denseLayout = true;
 		public static boolean bigNavigation = true;
@@ -197,6 +201,10 @@ public class MetaWatchService extends Service {
 				Preferences.invertLCD);
 		Preferences.notificationCenter = sharedPreferences.getBoolean(
 				"notificationCenter", Preferences.notificationCenter);
+		Preferences.notifyLight = sharedPreferences.getBoolean("notifyLight",
+				Preferences.notifyLight);
+		Preferences.stickyNotifications = sharedPreferences.getBoolean(
+				"stickyNotifications", Preferences.stickyNotifications);
 		Preferences.weatherCity = sharedPreferences.getString("WeatherCity",
 				Preferences.weatherCity);
 		Preferences.weatherCelsius = sharedPreferences.getBoolean(
@@ -207,12 +215,17 @@ public class MetaWatchService extends Service {
 				"WundergroundKey", Preferences.wundergroundKey);
 		Preferences.idleMusicControls = sharedPreferences.getBoolean(
 				"IdleMusicControls", Preferences.idleMusicControls);
+		Preferences.idleMusicControlMethod = Integer.parseInt(
+				sharedPreferences.getString("IdleMusicControlMethod", 
+				Integer.toString(Preferences.idleMusicControlMethod)));
 		Preferences.idleReplay = sharedPreferences.getBoolean("IdleReplay",
 				Preferences.idleReplay);
 		Preferences.disableWeather = sharedPreferences.getBoolean(
 				"DisableWeather", Preferences.disableWeather);
 		Preferences.autoConnect = sharedPreferences.getBoolean(
-				"AutoConnect", Preferences.autoConnect);		
+				"AutoConnect", Preferences.autoConnect);	
+		Preferences.autoRestart = sharedPreferences.getBoolean("AutoRestart", 
+				Preferences.autoRestart);
 		Preferences.showK9Unread = sharedPreferences.getBoolean(
 				"ShowK9Unread", Preferences.showK9Unread);
 		Preferences.denseLayout = sharedPreferences.getBoolean(
@@ -415,6 +428,7 @@ public class MetaWatchService extends Service {
 			updateNotification();
 
 			Protocol.startProtocolSender();
+			//Protocol.setNvalTime(context);
 			Protocol.sendRtcNow(context);
 			Protocol.getDeviceType();
 
@@ -431,7 +445,7 @@ public class MetaWatchService extends Service {
 			boolean notifyOnConnect = sharedPreferences.getBoolean("NotifyWatchOnConnect", false);
 			Log.d(MetaWatch.TAG, "MetaWatchService.connect(): notifyOnConnect=" + notifyOnConnect);
 			if (notifyOnConnect) {
-				NotificationBuilder.createOtherNotification(context, "MetaWatch", "Connected", null);
+				NotificationBuilder.createOtherNotification(context, "MetaWatch", "Connected");
 			}
 
 		} catch (IOException ioexception) {
@@ -702,11 +716,8 @@ public class MetaWatchService extends Service {
 					case MediaControl.VOLUME_DOWN:
 						MediaControl.volumeDown(audioManager);
 						break;
-					case MediaControl.HEADSET_PRESS:
-						MediaControl.headsetHook(context, true);
-						break;
-					case MediaControl.HEADSET_RELEASE:
-						MediaControl.headsetHook(context, false);
+					case MediaControl.HEADSET:
+						MediaControl.headsetHook(context);
 						break;
 					}
 				}
@@ -798,11 +809,8 @@ public class MetaWatchService extends Service {
 			case MediaControl.TOGGLE:
 				MediaControl.togglePause(this);
 				break;
-			case MediaControl.HEADSET_PRESS:
-				MediaControl.headsetHook(context, true);
-				break;
-			case MediaControl.HEADSET_RELEASE:
-				MediaControl.headsetHook(context, false);
+			case MediaControl.HEADSET:
+				MediaControl.headsetHook(context);
 				break;
 			case Protocol.REPLAY:
 				Notification.replay(this);
@@ -811,6 +819,24 @@ public class MetaWatchService extends Service {
 				String result = RMilk.getTasksText(context);
 				NotificationBuilder.createSmart(context, "Shopping", result, null, new VibratePattern(false,0,0,0));
 				break;
+				
+			case Idle.IDLE_NEXT_PAGE:
+				Idle.NextPage();
+				Idle.updateLcdIdle(this);
+				break;
+				
+			case Call.CALL_SPEAKER:
+				MediaControl.ToggleSpeakerphone(audioManager);
+				break;
+				
+			case Call.CALL_ANSWER:
+				MediaControl.AnswerCall(context);
+				break;
+				
+			case Call.CALL_DISMISS:
+				MediaControl.DismissCall(context);
+				break;
+		
 			}
 			/*
 			 * if (Idle.isIdleButtonOverriden(button)) { Log.d(MetaWatch.TAG,

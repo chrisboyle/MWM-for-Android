@@ -42,6 +42,10 @@ public class Call {
 	
 	public static boolean isRinging = false;
 	
+	final static byte CALL_SPEAKER = 90;
+	final static byte CALL_ANSWER = 91;
+	final static byte CALL_DISMISS = 92;
+	
 	public static void startCall(Context context, String number) {
 		toCall();
 		
@@ -51,9 +55,9 @@ public class Call {
 		String name = Utils.getContactNameFromNumber(context, number);
 		
 		if (name.equals(number))		
-			bitmap = NotificationBuilder.smartLines(context, "phone.bmp", new String[] { number});
+			bitmap = NotificationBuilder.smartLines(context, "phone.bmp", "Phone", new String[] { number });
 		else 
-			bitmap = NotificationBuilder.smartLines(context, "phone.bmp", new String[] { number, name });
+			bitmap = NotificationBuilder.smartLines(context, "phone.bmp", "Phone", new String[] { number, name });
 		
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
 			Protocol.sendLcdBitmap(bitmap, MetaWatchService.WatchBuffers.NOTIFICATION);		
@@ -77,11 +81,20 @@ public class Call {
 		
 	static void toCall() {		
 		MetaWatchService.watchState = MetaWatchService.WatchStates.CALL;
-		MetaWatchService.WatchModes.CALL = true;					
+		MetaWatchService.WatchModes.CALL = true;			
+		
+		Protocol.enableButton(0, 0, CALL_SPEAKER, 2); // Right top
+		Protocol.enableButton(1, 0, CALL_ANSWER, 2); // Right middle
+		Protocol.enableButton(2, 0, CALL_DISMISS, 2); // Right bottom
+
 	}
 	
 	static void exitCall(Context context) {
 				
+		Protocol.disableButton(0, 0, 2); // Right top
+		Protocol.disableButton(1, 0, 2); // Right middle
+		Protocol.disableButton(2, 0, 2); // Right bottom
+		
 		MetaWatchService.WatchModes.CALL = false;
 				
 		if (MetaWatchService.WatchModes.NOTIFICATION == true)

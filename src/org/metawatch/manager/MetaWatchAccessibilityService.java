@@ -48,22 +48,38 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 
 	static boolean haveCMHack = false;
 
+	private String currentActivity = "";
+
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
 
 		/* Acquire details of event. */
+		int eventType = event.getEventType();
 		CharSequence packageName = event.getPackageName();
 		CharSequence className = event.getClassName();
 		Log.d(MetaWatch.TAG,
 				"MetaWatchAccessibilityService.onAccessibilityEvent(): Received event, packageName = '"
 						+ packageName + "' className = '" + className + "'");
 
-		if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+		if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
 			if (! haveCMHack) {
 				// In the absence of a patched Android, just guess that notifications
 				// probably go away when you enter the app that sent them
 				LCDNotification.removePersistentNotifications(this, false, event.getPackageName().toString(), true);
 			}
+
+			String newActivity = className.toString();
+			if( MetaWatchService.Preferences.showK9Unread) {
+				if (currentActivity.startsWith("com.fsck.k9")) {
+					if (!newActivity.startsWith("com.fsck.k9")) {
+						// User has switched away from k9, so refresh the read count
+						Utils.refreshUnreadK9Count(this);
+						Idle.updateLcdIdle(this);
+					}
+				}
+			}
+
+			currentActivity = newActivity;
 			return;
 		}
 
@@ -209,16 +225,16 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				Log.d(MetaWatch.TAG,
 						"onAccessibilityEvent(): Unknown app -- sending notification: '"
 								+ notification.tickerText + "'.");
-				NotificationBuilder.createOtherNotification(this,
+				NotificationBuilder.createSmart(this,
 						"Notification", notification.tickerText.toString(),
-						icon);
+						icon, null);
 			} else {
 				Log.d(MetaWatch.TAG,
 						"onAccessibilityEvent(): Sending notification: app='"
 								+ appName + "' notification='"
 								+ notification.tickerText + "'.");
-				NotificationBuilder.createOtherNotification(this, appName,
-						notification.tickerText.toString(), icon);
+				NotificationBuilder.createSmart(this, appName,
+						notification.tickerText.toString(), icon, null);
 			}
 		}
 	}

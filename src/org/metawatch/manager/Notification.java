@@ -31,6 +31,7 @@ package org.metawatch.manager;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.metawatch.manager.MetaWatchService.Preferences;
 import org.metawatch.manager.MetaWatchService.WatchType;
 
 import android.content.Context;
@@ -47,7 +48,7 @@ public class Notification {
 	final static byte NOTIFICATION_DOWN = 31;
 	final static byte NOTIFICATION_DISMISS = 32;
 	
-	//private static byte notifyButtonPress = 0;
+	private static byte notifyButtonPress = 0;
 	
 	private static BlockingQueue<NotificationType> notificationQueue = new LinkedBlockingQueue<NotificationType>();
 	private static volatile boolean notificationSenderRunning = false;
@@ -55,6 +56,7 @@ public class Notification {
 	private static void addToNotificationQueue(NotificationType notification) {
 		if (MetaWatchService.connectionState == MetaWatchService.ConnectionState.CONNECTED) {
 			notificationQueue.add(notification);
+			MetaWatchService.notifyClients();
 		}
 	}
 
@@ -66,6 +68,7 @@ public class Notification {
 		}
 
 		public void run() {
+			int currentNotificationPage = 0;
 			while (notificationSenderRunning) {
 				try {
 					NotificationType notification = notificationQueue.take();
@@ -74,15 +77,24 @@ public class Notification {
 
 					if (MetaWatchService.watchType == WatchType.DIGITAL) {
 
-						if (notification.bitmap != null)
-							Protocol.sendLcdBitmap(notification.bitmap,
+						if (notification.bitmaps != null && notification.bitmaps.length>0) {
+							Protocol.sendLcdBitmap(notification.bitmaps[0],
 									MetaWatchService.WatchBuffers.NOTIFICATION);
+							currentNotificationPage = 0;
+							
+							Log.d(MetaWatch.TAG,
+									"Notification contains " + notification.bitmaps.length + " bitmaps.");
+														
+						}
 						else if (notification.array != null)
 							Protocol.sendLcdArray(notification.array,
 									MetaWatchService.WatchBuffers.NOTIFICATION);
 						else if (notification.buffer != null)
 							Protocol.sendLcdBuffer(notification.buffer,
 									MetaWatchService.WatchBuffers.NOTIFICATION);
+						else {
+							continue;
+						}
 
 						Protocol.updateDisplay(2);
 
@@ -90,6 +102,9 @@ public class Notification {
 							Protocol.vibrate(notification.vibratePattern.on,
 									notification.vibratePattern.off,
 									notification.vibratePattern.cycles);
+						
+						if (Preferences.notifyLight)
+							Protocol.ledChange(true);
 
 						Log.d(MetaWatch.TAG, "notif bitmap sent from thread");
 
@@ -168,23 +183,46 @@ public class Notification {
 					
 					if (notification.timeout < 0) {
 						//notifyButtonPress = 0;
+						if (notification.bitmaps!=null & notification.bitmaps.length>1) {
+							Protocol.enableButton(0, 0, NOTIFICATION_UP, 2); // Right top
+							Protocol.enableButton(1, 0, NOTIFICATION_DOWN, 2); // Right middle
+						}
 						Protocol.enableButton(2, 0, NOTIFICATION_DISMISS, 2); // Right bottom
 
 						Log.d(MetaWatch.TAG,
 								"NotificationSender.run(): Notification sent, waiting for dismiss " );
 						
-
-						try {
-							synchronized (Notification.buttonPressed) {
-								buttonPressed.wait();	
+						do {
+							try {
+								synchronized (Notification.buttonPressed) {
+									buttonPressed.wait();	
+								}
+							} catch (InterruptedException e) {
+								e.printStackTrace();
 							}
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+							
+							if (notifyButtonPress==NOTIFICATION_UP && currentNotificationPage>0) {
+								currentNotificationPage--;
+								Protocol.sendLcdBitmap(notification.bitmaps[currentNotificationPage],
+										MetaWatchService.WatchBuffers.NOTIFICATION);
+							}
+							else if (notifyButtonPress==NOTIFICATION_DOWN && currentNotificationPage<notification.bitmaps.length-1) {
+								currentNotificationPage++;
+								Protocol.sendLcdBitmap(notification.bitmaps[currentNotificationPage],
+										MetaWatchService.WatchBuffers.NOTIFICATION);
+							}
+							
+							Log.d(MetaWatch.TAG,
+									"Displaying page " + currentNotificationPage +" / "+ notification.bitmaps.length );
+							
+							Protocol.updateDisplay(2);
+						} while (notifyButtonPress != NOTIFICATION_DISMISS);
 						
 						
+						Protocol.disableButton(0, 0, 2); // Right top
+						Protocol.disableButton(1, 0, 2); // Right middle
 						Protocol.disableButton(2, 0, 2); // Right bottom
-						
+					
 						Log.d(MetaWatch.TAG,
 								"NotificationSender.run(): Done sleeping.");
 						
@@ -201,12 +239,17 @@ public class Notification {
 					if (MetaWatchService.WatchModes.CALL == false) {
 						exitNotification(context);
 					}
+					Thread.sleep(2000);
 
 				} catch (InterruptedException ie) {
 					/* If we've been interrupted, exit gracefully. */
 					Log.d(MetaWatch.TAG,
 							"NotificationSender was interrupted waiting for next notification, exiting.");
 					break;
+				}
+				catch (Exception e)
+				{
+					Log.e(MetaWatch.TAG, "Exception in NotificationSender: "+e.toString());
 				}
 			}
 		}
@@ -260,7 +303,7 @@ public class Notification {
 	public static Object buttonPressed = new Object();
 
 	public static class NotificationType {
-		Bitmap bitmap;
+		Bitmap[] bitmaps;
 		int[] array;
 		byte[] buffer;
 
@@ -294,7 +337,7 @@ public class Notification {
 	public static void addTextNotification(Context context, String text,
 			VibratePattern vibratePattern, int timeout) {
 		NotificationType notification = new NotificationType();
-		notification.bitmap = Protocol.createTextBitmap(context, text);
+		notification.bitmaps = new Bitmap[]{ Protocol.createTextBitmap(context, text) };
 		notification.timeout = timeout;
 		if (vibratePattern == null)
 			notification.vibratePattern = VibratePattern.NO_VIBRATE;
@@ -302,11 +345,21 @@ public class Notification {
 			notification.vibratePattern = vibratePattern;
 		addToNotificationQueue(notification);
 	}
-
+	
 	public static void addBitmapNotification(Context context, Bitmap bitmap,
 			VibratePattern vibratePattern, int timeout) {
+		addBitmapNotification(context, new Bitmap[] {bitmap}, vibratePattern, timeout);
+	}
+
+	public static void addBitmapNotification(Context context, Bitmap[] bitmaps,
+			VibratePattern vibratePattern, int timeout) {
+		
+		if (bitmaps!=null) {
+			Log.d(MetaWatch.TAG, "Notification comprised of "+bitmaps.length+" bitmaps");
+		}
+		
 		NotificationType notification = new NotificationType();
-		notification.bitmap = bitmap;
+		notification.bitmaps = bitmaps;
 		notification.timeout = timeout;
 		if (vibratePattern == null)
 			notification.vibratePattern = VibratePattern.NO_VIBRATE;
@@ -387,11 +440,14 @@ public class Notification {
 		Log.d(MetaWatch.TAG,
 				"Notification:Button pressed "+button );
 
-		//notifyButtonPress = button;
+		notifyButtonPress = button;
 		synchronized (Notification.buttonPressed) {
 			Notification.buttonPressed.notify();	
-		}
-		
+		}		
+	}
+	
+	public static int getQueueLength() {
+		return notificationQueue.size();
 	}
 
 }
