@@ -88,6 +88,8 @@
     <string name="settings_Digital">Digital Watch</string>
     <string name="settings_Analog">Analog Watch</string>
     <string name="settings_Other">Other</string>
+    <string name="disallowVib">Disallow all vibration?</string>
     
-    
+    <string name="vibDisallowed">Vibration not allowed</string>
+    <string name="vibAllowed">Vibration allowed</string>
 </resources>

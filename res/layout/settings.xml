@@ -215,7 +215,14 @@
 			android:summary="Use sticky notifications (that stay on screen until manually dismissed)"
 			android:defaultValue="true"
 			/>
-				
+		
+		<CheckBoxPreference
+			android:title="@string/disallowVib"
+			android:key="DisallowVibration"
+			android:summary="Locale can set this"
+			android:defaultValue="false"
+			/>
+
 	</PreferenceCategory>
 
 		

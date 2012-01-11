@@ -429,6 +429,7 @@ public class Protocol {
 
 	public static void vibrate(int on, int off, int cycles) {
 		Log.d(MetaWatch.TAG, "Protocol.vibrate(): on="+on+" off="+off+" cycles="+cycles);
+		if (MetaWatchService.Preferences.disallowVibration) return;
 		byte[] bytes = new byte[10];
 
 		bytes[0] = eMessageType.start;

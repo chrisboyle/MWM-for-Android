@@ -164,6 +164,7 @@ public class MetaWatchService extends Service {
 		public static boolean denseLayout = true;
 		public static boolean bigNavigation = true;
 		public static boolean dividers = false;
+		public static boolean disallowVibration = false;
 	}
 
 	final class WatchType {
@@ -235,6 +236,8 @@ public class MetaWatchService extends Service {
 				"BigNavigation", Preferences.bigNavigation);
 		Preferences.dividers = sharedPreferences.getBoolean(
 				"Dividers", Preferences.dividers);
+		Preferences.disallowVibration = sharedPreferences.getBoolean(
+				"DisallowVibration", Preferences.disallowVibration);
 
 		try {
 			Preferences.fontSize = Integer.valueOf(sharedPreferences.getString(

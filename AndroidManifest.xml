@@ -143,6 +143,21 @@
         <activity android:name="org.metawatch.manager.Test" 
                   android:launchMode="singleTask">
         </activity>
+        
+        <activity android:name=".locale.EditActivity"
+            android:label="@string/app_name"
+            android:icon="@drawable/icon"
+            android:theme="@style/Theme.Locale.Dark"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".locale.FireReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.twofortyfouram.locale.intent.action.FIRE_SETTING" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
