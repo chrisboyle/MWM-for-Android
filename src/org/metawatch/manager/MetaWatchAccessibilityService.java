@@ -141,8 +141,8 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 			List<CharSequence> l = event.getText();
 			String text = "";
 			boolean big = false;
-			if (LCDNotification.isMusic(packageName) && IntentReceiver.lastTrack.length() > 0) {
-				text = IntentReceiver.lastTrack + " (" + IntentReceiver.lastArtist + ")";
+			if (LCDNotification.isMusic(packageName) && MediaControl.lastTrack.length() > 0) {
+				text = MediaControl.lastTrack + " (" + MediaControl.lastArtist + ")";
 			} else {
 				int firstNotTicker = (notification.tickerText != null) ? 1 : 0;
 				if (firstNotTicker < l.size()) haveCMHack = true;

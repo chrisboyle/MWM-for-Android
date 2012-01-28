@@ -32,6 +32,9 @@
 
 package org.metawatch.manager;
 
+import org.metawatch.manager.MetaWatchService.Preferences;
+import org.metawatch.manager.Notification.VibratePattern;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -46,11 +49,7 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 
 public class IntentReceiver extends BroadcastReceiver {
-	
-	static String lastArtist = "";
-	static String lastAlbum = "";
-	static String lastTrack = "";
-	
+		
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();		
@@ -210,8 +209,9 @@ public class IntentReceiver extends BroadcastReceiver {
 				|| action.equals("com.android.music.playbackstatechanged")
 				|| action.equals(
 						"mobi.beyondpod.action.PLAYBACK_STATUS")
-				|| action.equals("com.htc.music.metachanged")
-				|| action.equals("com.nullsoft.winamp.metachanged")) {
+				|| intent.getAction().equals("com.htc.music.metachanged")
+				|| intent.getAction().equals("com.nullsoft.winamp.metachanged")
+				|| intent.getAction().equals("com.sonyericsson.music.playbackcontrol.ACTION_TRACK_STARTED")) {
 
 			PackageManager pm = context.getPackageManager();
 			String likelyPackage = action;
@@ -246,19 +246,25 @@ public class IntentReceiver extends BroadcastReceiver {
 
 			if (intent.hasExtra("artist"))
 				artist = intent.getStringExtra("artist");
+			else if (intent.hasExtra("ARTIST_NAME"))
+				artist = intent.getStringExtra("ARTIST_NAME");
 			if (intent.hasExtra("track"))
 				track = intent.getStringExtra("track");
+			else if (intent.hasExtra("TRACK_NAME"))
+				track = intent.getStringExtra("TRACK_NAME");
 			if (intent.hasExtra("album"))
 				album = intent.getStringExtra("album");
+			else if (intent.hasExtra("ALBUM_NAME"))
+				album = intent.getStringExtra("ALBUM_NAME");
 			
 			/* Ignore if track info hasn't changed. */
-			if (artist.equals(lastArtist) && track.equals(lastTrack) && album.equals(lastAlbum)) {
+			if (artist.equals(MediaControl.lastArtist) && track.equals(MediaControl.lastTrack) && album.equals(MediaControl.lastAlbum)) {
 				Log.d(MetaWatch.TAG, "IntentReceiver.onReceive(): Track info hasn't changed, ignoring");
 				return;
 			} else {
-				lastArtist = artist;
-				lastTrack = track;
-				lastAlbum = album;
+				MediaControl.lastArtist = artist;
+				MediaControl.lastTrack = track;
+				MediaControl.lastAlbum = album;
 			}
 
 			Bitmap icon = null;
@@ -278,10 +284,26 @@ public class IntentReceiver extends BroadcastReceiver {
 			if (!MetaWatchService.Preferences.notifyMusic)
 				return;
 
-			if (action.equals("com.nullsoft.winamp.metachanged")) {
-				NotificationBuilder.createWinamp(context, artist, track, album);				
-			} else {
-				NotificationBuilder.createMusic(context, artist, track, album);
+			if(MediaControl.mediaPlayerActive) {
+				VibratePattern vibratePattern = NotificationBuilder.createVibratePatternFromPreference(context, "settingsMusicNumberBuzzes");				
+	
+				Idle.updateLcdIdle(context);
+				
+				if (vibratePattern.vibrate)
+					Protocol.vibrate(vibratePattern.on,
+							vibratePattern.off,
+							vibratePattern.cycles);
+				
+				if (Preferences.notifyLight)
+					Protocol.ledChange(true);
+				
+			}
+			else {
+				if (intent.getAction().equals("com.nullsoft.winamp.metachanged")) {
+					NotificationBuilder.createWinamp(context, artist, track, album);				
+				} else {
+					NotificationBuilder.createMusic(context, artist, track, album);
+				}
 			}
 			
 		}

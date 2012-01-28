@@ -62,7 +62,7 @@
         android:layout_width="80dip"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/buttonF"
-        android:layout_alignParentRight="true" android:text="Shopping"/>
+        android:layout_alignParentRight="true" android:text="Media"/>
 
     <Button
         android:id="@+id/buttonE"
@@ -89,7 +89,7 @@
         android:layout_alignLeft="@+id/buttonA"
         android:layout_alignParentRight="true"
         android:layout_marginTop="15dp"
-        android:layout_below="@+id/buttonA" android:text="Seconds"/>
+        android:layout_below="@+id/buttonA" android:text="Shopping"/>
 
     <Button
         android:id="@+id/buttonC"
