@@ -45,6 +45,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 	static Pattern excludeTicker = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh)ing\\b.*",
 			Pattern.CASE_INSENSITIVE);
 	static Pattern excludeLine1 = Pattern.compile("(USB|Car mode|RssDemon|RSS) .*", 0);
+	static Pattern progressLike = Pattern.compile("\\d\\d?%|\\d\\d?:\\d\\d", 0);
 
 	static boolean haveCMHack = false;
 
@@ -157,6 +158,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 						continue;
 					}
 					if (i == firstNotTicker && excludeLine1.matcher(s).matches()) return;
+					if (progressLike.matcher(s).matches()) return;
 					if (text.length() > 0 && s.length() > 0 && ! text.endsWith(". ")) {
 						text += text.endsWith(".") ? " " : ". ";
 					}
