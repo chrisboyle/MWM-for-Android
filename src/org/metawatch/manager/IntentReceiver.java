@@ -32,9 +32,6 @@
 
 package org.metawatch.manager;
 
-import org.metawatch.manager.MetaWatchService.Preferences;
-import org.metawatch.manager.Notification.VibratePattern;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -211,7 +208,9 @@ public class IntentReceiver extends BroadcastReceiver {
 						"mobi.beyondpod.action.PLAYBACK_STATUS")
 				|| intent.getAction().equals("com.htc.music.metachanged")
 				|| intent.getAction().equals("com.nullsoft.winamp.metachanged")
-				|| intent.getAction().equals("com.sonyericsson.music.playbackcontrol.ACTION_TRACK_STARTED")) {
+				|| intent.getAction().equals("com.sonyericsson.music.playbackcontrol.ACTION_TRACK_STARTED")
+				|| intent.getAction().equals("com.amazon.mp3.metachanged")
+				|| intent.getAction().equals("com.adam.aslfms.notify.playstatechanged")) {
 
 			PackageManager pm = context.getPackageManager();
 			String likelyPackage = action;
@@ -248,64 +247,25 @@ public class IntentReceiver extends BroadcastReceiver {
 				artist = intent.getStringExtra("artist");
 			else if (intent.hasExtra("ARTIST_NAME"))
 				artist = intent.getStringExtra("ARTIST_NAME");
+			else if (intent.hasExtra("com.amazon.mp3.artist"))
+				artist = intent.getStringExtra("com.amazon.mp3.artist");
+			
 			if (intent.hasExtra("track"))
 				track = intent.getStringExtra("track");
 			else if (intent.hasExtra("TRACK_NAME"))
 				track = intent.getStringExtra("TRACK_NAME");
+			else if (intent.hasExtra("com.amazon.mp3.track"))
+				track = intent.getStringExtra("com.amazon.mp3.track");
+			
 			if (intent.hasExtra("album"))
 				album = intent.getStringExtra("album");
 			else if (intent.hasExtra("ALBUM_NAME"))
 				album = intent.getStringExtra("ALBUM_NAME");
-			
-			/* Ignore if track info hasn't changed. */
-			if (artist.equals(MediaControl.lastArtist) && track.equals(MediaControl.lastTrack) && album.equals(MediaControl.lastAlbum)) {
-				Log.d(MetaWatch.TAG, "IntentReceiver.onReceive(): Track info hasn't changed, ignoring");
-				return;
-			} else {
-				MediaControl.lastArtist = artist;
-				MediaControl.lastTrack = track;
-				MediaControl.lastAlbum = album;
-			}
-
-			Bitmap icon = null;
-			try {
-				PackageInfo packageInfo = pm.getPackageInfo(likelyPackage, 0);
-				icon = NotificationIconShrinker.shrink(
-						pm.getResourcesForApplication(packageInfo.applicationInfo),
-						packageInfo.applicationInfo.icon, likelyPackage,
-						NotificationIconShrinker.ICON_SIZE);
-			} catch (NameNotFoundException e) {}
-			if (icon == null) {
-				icon = Utils.loadBitmapFromAssets(context, "play11.bmp");
-			}
-			//LCDNotification.addPersistentNotification(context, true, likelyPackage,
-			//		icon, track+" ("+artist+")");
-
-			if (!MetaWatchService.Preferences.notifyMusic)
-				return;
-
-			if(MediaControl.mediaPlayerActive) {
-				VibratePattern vibratePattern = NotificationBuilder.createVibratePatternFromPreference(context, "settingsMusicNumberBuzzes");				
-	
-				Idle.updateLcdIdle(context);
-				
-				if (vibratePattern.vibrate)
-					Protocol.vibrate(vibratePattern.on,
-							vibratePattern.off,
-							vibratePattern.cycles);
-				
-				if (Preferences.notifyLight)
-					Protocol.ledChange(true);
-				
-			}
-			else {
-				if (intent.getAction().equals("com.nullsoft.winamp.metachanged")) {
-					NotificationBuilder.createWinamp(context, artist, track, album);				
-				} else {
-					NotificationBuilder.createMusic(context, artist, track, album);
-				}
-			}
-			
+			else if (intent.hasExtra("com.amazon.mp3.album"))
+				album = intent.getStringExtra("com.amazon.mp3.album");
+						
+			MediaControl.updateNowPlaying(context, artist, album, track, intent.getAction());
+					
 		}
 		
 	}

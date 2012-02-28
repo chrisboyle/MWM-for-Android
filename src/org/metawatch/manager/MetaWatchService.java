@@ -120,6 +120,7 @@ public class MetaWatchService extends Service {
 		static final int REGISTER_CLIENT = 0;
 		static final int UNREGISTER_CLIENT = 1;
 		static final int UPDATE_STATUS = 2;
+		static final int STOP_SERVICE = 3;
 	}
 
 	static class WatchModes {
@@ -129,7 +130,7 @@ public class MetaWatchService extends Service {
 		public static volatile boolean CALL = false;
 	}
 
-	static class Preferences {
+	public static class Preferences {
 		public static boolean loaded = false;
 		
 		public static boolean notifyCall = true;
@@ -160,6 +161,8 @@ public class MetaWatchService extends Service {
 		public static boolean disableWeather = false;
 		public static boolean autoConnect = false;
 		public static boolean autoRestart = false;
+		public static String widgets = "weather_96_32|missedCalls_24_32,unreadSms_24_32,unreadGmail_24_32";
+
 		public static boolean showK9Unread = false;
 		public static boolean denseLayout = true;
 		public static boolean bigNavigation = true;
@@ -238,6 +241,8 @@ public class MetaWatchService extends Service {
 				"Dividers", Preferences.dividers);
 		Preferences.disallowVibration = sharedPreferences.getBoolean(
 				"DisallowVibration", Preferences.disallowVibration);
+		Preferences.widgets = sharedPreferences.getString("widgets",
+				Preferences.widgets);
 
 		try {
 			Preferences.fontSize = Integer.valueOf(sharedPreferences.getString(
@@ -262,6 +267,15 @@ public class MetaWatchService extends Service {
 		editor.commit();
 	}
 	
+	public static void saveWidgets(Context context, String widgets) {
+		SharedPreferences sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(context);
+		Editor editor = sharedPreferences.edit();
+
+		editor.putString("widgets", widgets);
+		editor.commit();
+	}
+	
 	public void createNotification() {
 		SharedPreferences sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(context);
@@ -283,7 +297,7 @@ public class MetaWatchService extends Service {
 
 	private PendingIntent createNotificationPendingIntent() {
 		return PendingIntent.getActivity(this, 0, new Intent(this,
-				MetaWatch.class), 0);
+				TabContainer.class), 0);
 	}
 
 	public void updateNotification() {
@@ -353,6 +367,9 @@ public class MetaWatchService extends Service {
 				"MetaWatch");
 
 		audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		
+		Idle.updateLcdIdle(context);
+		
 		Monitors.start(this, telephonyManager);
 
 		start();
@@ -486,6 +503,9 @@ public class MetaWatchService extends Service {
             case Msg.UNREGISTER_CLIENT:
                 mClients.remove(msg.replyTo);
                 break;
+            case Msg.STOP_SERVICE:
+            	
+            	break;
                 
             default:
                 super.handleMessage(msg);

@@ -58,8 +58,7 @@ public class Protocol {
 	public static final byte RTM = 31;
 
 	private static volatile BlockingQueue<byte[]> sendQueue = new LinkedBlockingQueue<byte[]>();
-	
-	private static long lastSentTime = 0;
+
 	private static boolean queueStalled = false;
 	private static Object lastSentTimeLock = new Object();
 	
@@ -96,12 +95,46 @@ public class Protocol {
 	};
 	private static Thread protocolSenderThread = null;
 
+	private static Runnable protocolTimeoutHandler = new Runnable() {
+		public void run() {
+
+			while (protocolSenderRunning) {
+				try {
+
+					/* Remember the current queue length */
+					int prevQueueSize=sendQueue.size();
+
+					/* Wait some time */
+					Thread.sleep(5*1000);
+
+					/* Thread was not stopped, so sent of last message failed */
+					/* => restart service */
+					if ((sendQueue.size()!=0)&&(prevQueueSize==sendQueue.size())) {
+						Log.d(MetaWatch.TAG, "Send queue is stalled, requesting restart of service");    
+						synchronized (lastSentTimeLock) {
+							queueStalled = true;
+						}
+						MetaWatchService.notifyClients();            
+					}
+
+				}
+				catch (InterruptedException ioe) {
+					//Log.d(MetaWatch.TAG, "Timeout aborted");        
+				}
+
+			}      
+		}
+	};
+	private static Thread protocolTimeoutHandlerThread = null;
+
 	public static synchronized void startProtocolSender() {
 		if (protocolSenderRunning == false) {
 			protocolSenderRunning = true;
 			protocolSenderThread = new Thread(protocolSender, "ProtocolSender");
 			protocolSenderThread.setDaemon(true);
 			protocolSenderThread.start();
+			protocolTimeoutHandlerThread = new Thread(protocolTimeoutHandler, "ProtocolTimeoutHandler");
+			protocolTimeoutHandlerThread.start();
 		}
 	}
 
@@ -111,8 +144,10 @@ public class Protocol {
 			protocolSenderRunning = false;
 			/* Wakes up thread if it's sleeping on the queue */
 			protocolSenderThread.interrupt();
+			protocolTimeoutHandlerThread.interrupt();
 			/* Thread is dead, we can mark it for garbage collection. */
 			protocolSenderThread = null;
+			protocolTimeoutHandlerThread = null;
 		}
 	}
 
@@ -194,23 +229,9 @@ public class Protocol {
 	}
 
 	public static void enqueue(byte[] bytes) {
-		
-		if ( (sendQueue.size() > 0 /*|| Notification.getQueueLength() > 0*/) && queueStalled==false) {
-			long currentTime = System.currentTimeMillis();
-			long timeSinceSent;
-			synchronized (lastSentTimeLock) {
-				timeSinceSent = currentTime - lastSentTime;
-			
-				if (timeSinceSent>5*1000) {
-					queueStalled = true;
-					Log.e(MetaWatch.TAG, "bt comms stalled?");
-					MetaWatchService.notifyClients();
-				}
-			}
-		}
-		
+
 		sendQueue.add(bytes);
-		
+
 		if (sendQueue.size() % 10 == 0)
 			MetaWatchService.notifyClients();
 	}
@@ -239,15 +260,11 @@ public class Protocol {
 		if (MetaWatchService.outputStream == null)
 			throw new IOException("OutputStream is null");
 
+		protocolTimeoutHandlerThread.interrupt();  // tell the timeout handler to check the queue after time out
 		MetaWatchService.outputStream
 				.write(byteArrayOutputStream.toByteArray());
 		MetaWatchService.outputStream.flush();
-		
-		synchronized (lastSentTimeLock) {
-			lastSentTime = System.currentTimeMillis();
-			queueStalled = false;
-		}
-		
+
 		if (sendQueue.size() % 10 == 0)
 			MetaWatchService.notifyClients();
 	}

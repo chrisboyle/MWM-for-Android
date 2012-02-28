@@ -2,102 +2,35 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/RelativeLayout1"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
-
-    <ImageView
-        android:id="@+id/watchView"
+    android:layout_height="fill_parent"
+    >
+    
+  <LinearLayout
+      android:orientation="horizontal"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:padding="5dip">
+   
+  <ToggleButton android:id="@+id/toggleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/buttonD"
-        android:layout_alignParentTop="true"
-        android:layout_toLeftOf="@+id/buttonA"
-        android:layout_toRightOf="@+id/buttonF" />
-
-    <LinearLayout
-        android:id="@+id/LinearLayout1"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/watchView"
-        android:orientation="horizontal"
-        android:padding="5dip"
-        android:layout_marginTop="8dp">
-
-        <Button
-            android:id="@+id/start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Start" />
-
-        <Button
-            android:id="@+id/stop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:enabled="false"
-            android:text="Stop" />
-    </LinearLayout>
-
-    <ScrollView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_below="@+id/LinearLayout1" >
-
-        <TextView
-            android:id="@+id/textview"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" />
-    </ScrollView>
-
-    <Button
-        android:id="@+id/buttonF"
-        android:layout_width="80dip"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="15dp" android:text="Status"/>
-
-    <Button
-        android:id="@+id/buttonA"
-        android:layout_width="80dip"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/buttonF"
-        android:layout_alignParentRight="true" android:text="Media"/>
-
-    <Button
-        android:id="@+id/buttonE"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignRight="@+id/buttonF"
-        android:layout_marginTop="15dp"
-        android:layout_below="@+id/buttonF" android:text="Music"/>
-
-    <Button
-        android:id="@+id/buttonD"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignRight="@+id/buttonE"
-        android:layout_marginTop="15dp"
-        android:layout_below="@+id/buttonE" android:text="Light"/>
-
-    <Button
-        android:id="@+id/buttonB"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/buttonA"
-        android:layout_alignParentRight="true"
-        android:layout_marginTop="15dp"
-        android:layout_below="@+id/buttonA" android:text="Shopping"/>
-
-    <Button
-        android:id="@+id/buttonC"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/buttonB"
-        android:layout_alignParentRight="true"
-        android:layout_marginTop="15dp"
-        android:layout_below="@+id/buttonB" android:text="Settings"/>
-
-</RelativeLayout>
+        android:layout_weight="1"
+		android:textOn="Service running.  Click to stop."
+		android:textOff="Service stopped.  Click to start." />   
+      
+  </LinearLayout>    
+    
+<ScrollView android:id="@+id/ScrollView01"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+   
+<TextView  
+    android:id="@+id/textview"
+    android:layout_width="fill_parent" 
+    android:layout_height="fill_parent" 
+    android:layout_weight="1"
+    />
+    
+ </ScrollView>
+    
+</LinearLayout>

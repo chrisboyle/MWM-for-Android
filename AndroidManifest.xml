@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.metawatch.manager"
       android:versionCode="1"
-      android:installLocation="internalOnly" android:versionName="0.2.4.rm9.cb6">
+      android:installLocation="internalOnly" android:versionName="0.2.4.rm10.cb7">
     <uses-sdk android:minSdkVersion="7" />
     <supports-screens android:resizeable="true" android:normalScreens="true" android:anyDensity="true" android:largeScreens="true" android:smallScreens="true"></supports-screens>
     
@@ -31,7 +31,7 @@
 	<uses-permission android:name="com.fsck.k9.permission.READ_MESSAGES"/>
 
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="false">
-        <activity android:name=".MetaWatch"
+        <activity android:name=".TabContainer"
                   android:configChanges="keyboardHidden|orientation"
                   android:launchMode="singleTask">
             <intent-filter>
@@ -86,6 +86,8 @@
             	<action android:name="com.sonyericsson.music.playbackcontrol.ACTION_TRACK_STARTED" />
             	<action android:name="com.motorola.blur.alarmclock.ALARM_ALERT" />
             	<action android:name="com.motorola.blur.alarmclock.COUNT_DOWN" />
+            	<action android:name="com.amazon.mp3.metachanged" />	
+            	<action android:name="com.adam.aslfms.notify.playstatechanged" />
             </intent-filter>
             <intent-filter>
 	            <action android:name="android.intent.action.EVENT_REMINDER" />
@@ -128,7 +130,8 @@
             	<action android:name="org.metawatch.manager.APPLICATION_START"/>
             	<action android:name="org.metawatch.manager.APPLICATION_STOP"/>
             	<action android:name="org.metawatch.manager.IDLE_BUTTONS_OVERRIDE"/>
-            	<action android:name="org.metawatch.manager.NOTIFICATION"/>				            	
+            	<action android:name="org.metawatch.manager.NOTIFICATION"/>	
+            	<action android:name="org.metawatch.manager.VIBRATE"/>			            	
             </intent-filter>            
         </receiver> 
         <receiver android:name="org.metawatch.manager.AlarmReceiver"></receiver>
@@ -137,10 +140,20 @@
 			<intent-filter>
 				<action android:name="android.accessibilityservice.AccessibilityService" />
 			</intent-filter>
-		</service>        
+		</service>      
+		<activity android:name="org.metawatch.manager.MetaWatch" 
+                  android:launchMode="standard">
+        </activity>  
         <activity android:name="Settings" 
         		  android:launchMode="singleTask">
         </activity>
+        <activity android:name="WidgetSetup"
+        		  android:configChanges="keyboardHidden|orientation" 
+        		  android:launchMode="standard">
+        </activity>
+        <activity android:name="WidgetPicker" 
+        		  android:launchMode="standard">
+        </activity>        
         <activity android:name="org.metawatch.manager.Test" 
                   android:launchMode="singleTask">
         </activity>

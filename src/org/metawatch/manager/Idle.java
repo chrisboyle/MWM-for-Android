@@ -32,21 +32,23 @@
 
 package org.metawatch.manager;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.metawatch.manager.MetaWatchService.Preferences;
-import org.metawatch.manager.Monitors.LocationData;
-import org.metawatch.manager.Monitors.WeatherData;
+import org.metawatch.manager.widgets.InternalWidget.WidgetData;
+import org.metawatch.manager.widgets.WidgetManager;
+import org.metawatch.manager.widgets.WidgetRow;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.text.TextUtils;
-import android.text.TextUtils.TruncateAt;
 import android.util.Log;
 
 public class Idle {
@@ -56,6 +58,8 @@ public class Idle {
 	final static byte IDLE_NEXT_PAGE = 60;
 
 	static int currentPage = 0;
+	
+	static boolean widgetsInitialised = false;
 	
 	public static void NextPage() {
 		
@@ -82,44 +86,20 @@ public class Idle {
 		return pages;
 	}
 	
-	static void drawWrappedText(String text, Canvas canvas, int x, int y, int width, TextPaint paint, android.text.Layout.Alignment align) {
-		canvas.save();
-		StaticLayout layout = new StaticLayout(text, paint, width, align, 1.0f, 0, false);
-		canvas.translate(x, y); //position the text
-		layout.draw(canvas);
-		canvas.restore();	
-	}
-	
-	static void drawOutlinedText(String text, Canvas canvas, int x, int y, TextPaint col, TextPaint outline) {
-		canvas.drawText(text, x+1, y, outline);
-		canvas.drawText(text, x-1, y, outline);
-		canvas.drawText(text, x, y+1, outline);
-		canvas.drawText(text, x, y-1, outline);
-	
-		canvas.drawText(text, x, y, col);
-	}
-	
-	static void drawWrappedOutlinedText(String text, Canvas canvas, int x, int y, int width, TextPaint col, TextPaint outline, android.text.Layout.Alignment align) {
-		drawWrappedText(text, canvas, x-1, y, width, outline, align);
-		drawWrappedText(text, canvas, x+1, y, width, outline, align);
-		drawWrappedText(text, canvas, x, y-1, width, outline, align);
-		drawWrappedText(text, canvas, x, y+1, width, outline, align);
-		
-		drawWrappedText(text, canvas, x, y, width, col, align);
+
+	static synchronized Bitmap createLcdIdle(Context context) {
+		return createLcdIdle(context, currentPage);
 	}
 
 	static Bitmap lastIdle = null;
 
-	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
-
-	static int sum(int[] a)
-	{
-		int s = 0;
-		for (int i : a) s += i;
-		return s;
-	}
-
-	static Bitmap createLcdIdle(Context context) {
+	static synchronized Bitmap createLcdIdle(Context context, int page) {
+		
+		if(!widgetsInitialised) {
+			WidgetManager.initWidgets(context, null);
+			widgetsInitialised = true;
+		}
+		
 		Bitmap bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(bitmap);
 		
@@ -143,269 +123,37 @@ public class Idle {
 		paintLargeOutline.setTextSize(FontCache.instance(context).Large.size);
 		paintLargeOutline.setTypeface(FontCache.instance(context).Large.face);
 		
-		canvas.drawColor(Color.WHITE);
-
-		int y = 31;
-		if (Preferences.dividers) {
-			canvas = drawLine(canvas, y);
-			y += 3;
-		}
-
-		if( currentPage == 0 ) {
+		canvas.drawColor(Color.WHITE);	
+		
+		if( page == 0 ) {
+		
 			Protocol.configureIdleBufferSize(true);
-		}
-		int xAfterWeather = 1;
-		if( currentPage == 0 && !Preferences.disableWeather) {
-			if (Preferences.denseLayout) {
-				if (WeatherData.received) {
-
-					canvas.drawText(WeatherData.temp, 2, y+11, paintLarge);
-					int x = (int)Math.ceil(3 + paintLarge.measureText(WeatherData.temp) +
-							Math.max(paintSmall.measureText(WeatherData.tempHigh),
-									paintSmall.measureText(WeatherData.tempLow)));
-					paintSmall.setTextAlign(Paint.Align.RIGHT);
-					canvas.drawText(WeatherData.tempHigh, x, y+5, paintSmall);
-					canvas.drawText(WeatherData.tempLow,  x, y+11, paintSmall);
-					paintSmall.setTextAlign(Paint.Align.LEFT);
-					xAfterWeather = x + 1;
-
-				} else {
-					if (Preferences.weatherGeolocation) {
-						if( !LocationData.received ) {
-							// 13x13
-							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_gps.bmp"), 1, y-1, null);
-							xAfterWeather = 15;
-						} else {
-							// 14x13
-							canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "wait_data.bmp"), 1, y-1, null);
-							xAfterWeather = 16;
-						}
-					} else {
-						// 23x12
-						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "weather_unknown.bmp"), 1, y, null);
-						xAfterWeather = 25;
-					}
-				}
-
-			} else {
-				if (WeatherData.received) {
-					
-					// icon
-					Bitmap image = Utils.loadBitmapFromAssets(context, WeatherData.icon);
-					canvas.drawBitmap(image, 36, 37, null);
-					
-					// condition
-					drawWrappedOutlinedText(WeatherData.condition, canvas, 1, 35, 60, paintSmall, paintSmallOutline, Layout.Alignment.ALIGN_NORMAL);
-										
-					// temperatures
-					if (WeatherData.celsius) {
-						paintLarge.setTextAlign(Paint.Align.RIGHT);
-						canvas.drawText(WeatherData.temp, 82, 46, paintLarge);
-						//RM: since the degree symbol draws wrong...
-						canvas.drawText("O", 82, 40, paintSmall);
-						canvas.drawText("C", 95, 46, paintLarge);
-					}
-					else {
-						paintLarge.setTextAlign(Paint.Align.RIGHT);
-						canvas.drawText(WeatherData.temp, 83, 46, paintLarge);
-						//RM: since the degree symbol draws wrong...
-						canvas.drawText("O", 83, 40, paintSmall);
-						canvas.drawText("F", 95, 46, paintLarge);
-					}
-					paintLarge.setTextAlign(Paint.Align.LEFT);
-								
-					canvas.drawText("High", 64, 54, paintSmall);
-					canvas.drawText("Low", 64, 62, paintSmall);
-					
-					paintSmall.setTextAlign(Paint.Align.RIGHT);
-					canvas.drawText(WeatherData.tempHigh, 95, 54, paintSmall);
-					canvas.drawText(WeatherData.tempLow, 95, 62, paintSmall);
-					paintSmall.setTextAlign(Paint.Align.LEFT);
 	
-					drawOutlinedText((String) TextUtils.ellipsize(WeatherData.locationName, paintSmall, 63, TruncateAt.END), canvas, 1, 62, paintSmall, paintSmallOutline);
-								
-				} else {
-					paintSmall.setTextAlign(Paint.Align.CENTER);
-					if (Preferences.weatherGeolocation) {
-						if( !LocationData.received ) {
-							canvas.drawText("Awaiting location", 48, 50, paintSmall);
-						}
-						else {
-							canvas.drawText("Awaiting weather", 48, 50, paintSmall);
-						}
-					}
-					else {
-						canvas.drawText("No data", 48, 50, paintSmall);
-					}
-					paintSmall.setTextAlign(Paint.Align.LEFT);
-				}
-				
-				if (Preferences.dividers) {
-					canvas = drawLine(canvas, 64);
-				}
-			}
-		}
-
-		if( currentPage == 0) {
-
-			if( Preferences.denseLayout) {
-				int x = xAfterWeather;
-				synchronized (LCDNotification.iconNotifications) {
-					for (LCDNotification n : LCDNotification.iconNotifications) {
-						// They're already scaled to (mostly) 13 pixels high; width varies
-						int w = n.icon.getWidth();
-						int h = n.icon.getHeight();
-						int iy = y + 5 - h/2;
-						canvas.drawBitmap(n.icon, null, new Rect(x, iy, x+w, iy+h), null);
-						x += w + 1;
-						if (x > 96) break;
-					}
-				}
-
-				y += 13;
-
-				if (Preferences.dividers) {
-					drawLine(canvas, y);
-					y += 2;
-				}
-
-				for (LCDNotification n : LCDNotification.ongoingNotifications) {
-					if (! n.big) continue;
-					canvas.save();
-					TextPaint paint = new TextPaint(paintLarge);
-					StaticLayout layout = new StaticLayout(n.text, paint, 94,
-							android.text.Layout.Alignment.ALIGN_NORMAL, 0.9f, 0, false);
-					canvas.translate(1, y);
-					layout.draw(canvas);
-					canvas.restore();
-					y += layout.getHeight() + 1;
-				}
-
-				int pxRemain = 96 - y;
-				synchronized (LCDNotification.ongoingNotifications) {
-					int maxW = 13;
-					int[] heights = new int[LCDNotification.ongoingNotifications.size()];
-					int i=0;
-					TextPaint paint = new TextPaint(paintSmall);
-					for (LCDNotification n : LCDNotification.ongoingNotifications) {
-						if (n.big) continue;
-						int h = 0;
-						if (n.icon != null) {
-							maxW = Math.max(maxW, n.icon.getWidth());
-							h = n.icon.getHeight();
-						}
-						int lh = n.makeTextLayout(-1, paint);
-						heights[i++] = Math.max(h,Math.min(lh, pxRemain));
-					}
-					int maxLines = pxRemain/LINE_H + 1;
-					while (maxLines > 2 && sum(heights) > pxRemain) {
-						maxLines--;
-						for (i=0; i<heights.length; i++) {
-							heights[i] = Math.min(heights[i], maxLines*LINE_H);
-						}
-					}
-					i = 0;
-					for (LCDNotification n : LCDNotification.ongoingNotifications) {
-						if (n.big) continue;
-						int ih = n.icon.getHeight();
-						int th = Math.max(ih, heights[i++]);
-						if (n.icon != null) {
-							int w = n.icon.getWidth();
-							x = 1 + maxW/2 - w/2;
-							canvas.drawBitmap(n.icon, null, new Rect(x, y, x+w, y+ih), null);
-						}
-						canvas.save();
-						canvas.translate(maxW + 2, y); //position the text
-						canvas.clipRect(0, 0, 80, th);
-						if (n.getTextHeight() > th) {
-							int left = 3, right = n.text.length()-1, len = (left+right)/2;
-							while (left < right) {
-								int h = n.makeTextLayout(len, paint);
-								if (h > th) {
-									right = len-1;
-								} else {
-									if (left == len) break;
-									left = len;
-								}
-								len = (left+right)/2;
-							}
-							n.makeTextLayout(len, paint);
-						}
-						n.drawText(canvas);
-						canvas.restore();
-						y += th + 1;
-						if (y > 96) break;
-					}
-				}
-			}
-
-			int rows = Preferences.denseLayout ? 0 : 3;
-			int yPos = !Preferences.disableWeather ? 67 : 36;
-			// icons
-			for (int i = 0; i < rows; i++) {
-				int slotSpace = 96/rows;
-				int slotX = slotSpace/2-12;
-				int iconX = slotSpace*i + slotX;
-				switch (i) {
-					case 0:
-						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "idle_call.bmp"), iconX, yPos, null);
-						break;
-					case 1:
-						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "idle_sms.bmp"), iconX, yPos, null);
-						break;
-					case 2:
-						canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "idle_gmail.bmp"), iconX, yPos, null);
-						break;
-				}
-			}
-					
-			// unread counters
-			for (int i = 0; i < rows; i++) {
-				String count = "";
-				switch (i) {
-					case 0:
-						count = Integer.toString(Utils.getMissedCallsCount(context));	
-						break;
-					case 1:
-						count = Integer.toString(Utils.getUnreadSmsCount(context));
-						break;
-					case 2:
-						if(Preferences.showK9Unread) {
-							Log.d(MetaWatch.TAG, "Idle: About to draw k9 count.");
-							count = Integer.toString(Utils.getUnreadK9Count(context));
-							Log.d(MetaWatch.TAG, "Idle: k9 count is " + count);
-						}
-						else {
-							Log.d(MetaWatch.TAG, "Idle: About to draw Gmail count.");
-							if (Utils.isGmailAccessSupported(context))
-								count = Integer.toString(Utils.getUnreadGmailCount(context, Utils.getGoogleAccountName(context), "^i"));
-							else 
-								count = Integer.toString(Monitors.getGmailUnreadCount());
-							Log.d(MetaWatch.TAG, "Idle: Gmail count is " + count);
-						}
-						break;				
-				}
-						
-				int slotSpace = 96/rows;
-				int slotX = (int) (slotSpace/2-paintSmall.measureText(count)/2)+1;
-				int countX = slotSpace*i + slotX;
-				
-				canvas.drawText(count, countX, !Preferences.disableWeather ? 92 : 62, paintSmall);
-			}
-			if(Preferences.disableWeather) {
-				canvas = drawLine(canvas, 64);
-				//Add more icons here in future.
-			}
+			List<WidgetRow> rows = WidgetManager.getDesiredWidgetsFromPrefs();
 			
+			List<String> widgetsDesired = new ArrayList<String>();
+			for(WidgetRow row : rows) {
+				widgetsDesired.addAll(row.getIds());
+			}			
+			Map<String,WidgetData> widgetData = WidgetManager.refreshWidgets(widgetsDesired);
+			
+			int space = (64 - (rows.size()*32)) / (rows.size()+1);
+			int yPos = 32 + space;
+			
+			for(WidgetRow row : rows) {
+				row.draw(widgetData, canvas, yPos);
+				yPos += 32 + space;
+			}
+				
 		}
-		else if (currentPage == 1) {
+		else if (page == 1) {
 			Protocol.configureIdleBufferSize(false);
 			
 			if(MediaControl.lastTrack=="") {
-				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "media_player_idle.bmp"), 0, 0, null);				
+				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "media_player_idle.png"), 0, 0, null);				
 			}
 			else {	
-				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "media_player.bmp"), 0, 0, null);
+				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "media_player.png"), 0, 0, null);
 				
 				
 				TextPaint tp = null;
@@ -444,7 +192,7 @@ public class Idle {
 		
 		return bitmap;
 	}
-	
+
 	public static Canvas drawLine(Canvas canvas, int y) {
 		Paint paint = new Paint();
 		paint.setColor(Color.BLACK);
