@@ -122,6 +122,12 @@ public class MetaWatchService extends Service {
 		static final int UPDATE_STATUS = 2;
 		static final int STOP_SERVICE = 3;
 	}
+	
+	public final class WeatherProvider {
+		public static final int DISABLED = 0;
+		public static final int GOOGLE = 1;
+		public static final int WUNDERGROUND = 2;
+	}
 
 	static class WatchModes {
 		public static volatile boolean IDLE = false;
@@ -148,6 +154,7 @@ public class MetaWatchService extends Service {
 		public static boolean notificationCenter = false;
 		public static boolean notifyLight = false;
 		public static boolean stickyNotifications = true;
+		public static int weatherProvider = WeatherProvider.GOOGLE;
 		public static String weatherCity = "Dallas,US";
 		public static boolean weatherCelsius = false;
 		public static boolean weatherGeolocation = false;
@@ -155,10 +162,9 @@ public class MetaWatchService extends Service {
 		public static int fontSize = 2;
 		public static int smsLoopInterval = 15;
 		public static boolean idleMusicControls = false;
-		public static int idleMusicControlMethod = MediaControl.MEDIACONTROL_MUSICSERVICECOMMAND;
+		public static int idleMusicControlMethod = MediaControl.MUSICSERVICECOMMAND;
 		public static boolean idleReplay = false;
 		public static boolean notificationLarger = false;
-		public static boolean disableWeather = false;
 		public static boolean autoConnect = false;
 		public static boolean autoRestart = false;
 		public static String widgets = "weather_96_32|missedCalls_24_32,unreadSms_24_32,unreadGmail_24_32";
@@ -211,7 +217,10 @@ public class MetaWatchService extends Service {
 		Preferences.stickyNotifications = sharedPreferences.getBoolean(
 				"stickyNotifications", Preferences.stickyNotifications);
 		Preferences.weatherCity = sharedPreferences.getString("WeatherCity",
-				Preferences.weatherCity);
+				Preferences.weatherCity);	
+		Preferences.weatherProvider = Integer.parseInt(
+				sharedPreferences.getString("WeatherProvider", 
+				Integer.toString(Preferences.weatherProvider)));
 		Preferences.weatherCelsius = sharedPreferences.getBoolean(
 				"WeatherCelsius", Preferences.weatherCelsius);
 		Preferences.weatherGeolocation = sharedPreferences.getBoolean(
@@ -225,8 +234,6 @@ public class MetaWatchService extends Service {
 				Integer.toString(Preferences.idleMusicControlMethod)));
 		Preferences.idleReplay = sharedPreferences.getBoolean("IdleReplay",
 				Preferences.idleReplay);
-		Preferences.disableWeather = sharedPreferences.getBoolean(
-				"DisableWeather", Preferences.disableWeather);
 		Preferences.autoConnect = sharedPreferences.getBoolean(
 				"AutoConnect", Preferences.autoConnect);	
 		Preferences.autoRestart = sharedPreferences.getBoolean("AutoRestart", 
@@ -373,6 +380,7 @@ public class MetaWatchService extends Service {
 		Monitors.start(this, telephonyManager);
 
 		start();
+
 	}
 	
 	@Override
@@ -461,6 +469,8 @@ public class MetaWatchService extends Service {
 				Protocol.enableReplayButton();
 			else
 				Protocol.enableRTM();
+			
+			Notification.addBitmapNotification(this, Utils.loadBitmapFromAssets(context, "splash.png"), new VibratePattern(false, 0, 0, 0), 10000);
 			
 			/* Notify watch on connection if requested. */
 			SharedPreferences sharedPreferences = PreferenceManager

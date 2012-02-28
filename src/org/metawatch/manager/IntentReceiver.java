@@ -201,10 +201,19 @@ public class IntentReceiver extends BroadcastReceiver {
 			}
 			return;
 		}
-		else if (action.equals("com.android.music.metachanged")
+		
+		else if (intent.getAction().equals("org.metawatch.manager.UPDATE_CALENDAR")){
+			
+			if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
+				Idle.updateLcdIdle(context);
+			}
+			
+		}
+		
+		else if (intent.getAction().equals("com.android.music.metachanged")
 				|| action.equals("com.android.music.playbackcomplete")
 				|| action.equals("com.android.music.playbackstatechanged")
-				|| action.equals(
+				|| intent.getAction().equals(
 						"mobi.beyondpod.action.PLAYBACK_STATUS")
 				|| intent.getAction().equals("com.htc.music.metachanged")
 				|| intent.getAction().equals("com.nullsoft.winamp.metachanged")
@@ -263,7 +272,14 @@ public class IntentReceiver extends BroadcastReceiver {
 				album = intent.getStringExtra("ALBUM_NAME");
 			else if (intent.hasExtra("com.amazon.mp3.album"))
 				album = intent.getStringExtra("com.amazon.mp3.album");
-						
+			
+			if(artist==null)
+				artist="";
+			if(album==null)
+				album="";
+			if(track==null)
+				track="";
+			
 			MediaControl.updateNowPlaying(context, artist, album, track, intent.getAction());
 					
 		}

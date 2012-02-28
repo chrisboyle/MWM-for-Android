@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.metawatch.manager"
       android:versionCode="1"
-      android:installLocation="internalOnly" android:versionName="0.2.4.rm10.cb7">
-    <uses-sdk android:minSdkVersion="7" />
+      android:installLocation="internalOnly" android:versionName="0.2.4.rm11.cb7">
+    <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="10"/>
     <supports-screens android:resizeable="true" android:normalScreens="true" android:anyDensity="true" android:largeScreens="true" android:smallScreens="true"></supports-screens>
     
     <uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>
@@ -88,6 +88,7 @@
             	<action android:name="com.motorola.blur.alarmclock.COUNT_DOWN" />
             	<action android:name="com.amazon.mp3.metachanged" />	
             	<action android:name="com.adam.aslfms.notify.playstatechanged" />
+            	<action android:name="org.metawatch.manager.UPDATE_CALENDAR"/>
             </intent-filter>
             <intent-filter>
 	            <action android:name="android.intent.action.EVENT_REMINDER" />

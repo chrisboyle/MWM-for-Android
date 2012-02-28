@@ -36,6 +36,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
+import org.metawatch.manager.MetaWatchService.WeatherProvider;
 import org.metawatch.manager.Monitors.LocationData;
 import org.metawatch.manager.Monitors.WeatherData;
 
@@ -74,8 +75,6 @@ public class MetaWatch extends Activity {
 	
 	private TextView textView;
 	private ImageView watchView;
-	//private Button buttonStart;
-	//private Button buttonStop;
 	
 	private ToggleButton toggleButton;
 	
@@ -123,20 +122,6 @@ public class MetaWatch extends Activity {
             }
         });
 		
-		//buttonStart = (Button) findViewById(R.id.start);
-		//buttonStart.setOnClickListener(new View.OnClickListener() {
-        //    public void onClick(View v) {
-        //        startService();
-        //    }
-        //});
-		
-		//buttonStop = (Button) findViewById(R.id.stop);
-		//buttonStop.setOnClickListener(new View.OnClickListener() {
-        //    public void onClick(View v) {
-        //        stopService();
-        //    }
-        //});
-		
 		displayStatus();
 		
 		Protocol.configureMode();
@@ -169,9 +154,6 @@ public class MetaWatch extends Activity {
         mIsBound = true;
         
         toggleButton.setChecked(true);
-        
-        //buttonStart.setEnabled(false);
-        //buttonStop.setEnabled(true);
 	}
 	
     void stopService() {
@@ -201,10 +183,7 @@ public class MetaWatch extends Activity {
         }
     	
     	toggleButton.setChecked(false);
-    	
-    	//buttonStart.setEnabled(true);
-    	//buttonStop.setEnabled(false);
-   
+
         displayStatus();
     }
     
@@ -228,7 +207,7 @@ public class MetaWatch extends Activity {
 		String html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /><title>About</title></head><body>" + 
 						"<h1>MetaWatch</h1>" +
 						"<p>Version " + Utils.getVersion(this) + ".</p>" +
-						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald and Chris Boyle</p>" +
+						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald, Kyle Schroeder and Chris Boyle.</p>" +
 						"<p>© Copyright 2011-2012 Meta Watch Ltd.</p>" +
 						"</body></html>";
         webView.loadData(html, "text/html", "utf-8");
@@ -287,31 +266,43 @@ public class MetaWatch extends Activity {
 	    		break;
     	}
     	
-    	if (!Preferences.disableWeather) {
+    	if (Preferences.weatherProvider != WeatherProvider.DISABLED) {
     		textView.append("\n");
-    		if (WeatherData.received)
-    		{
+    		if (WeatherData.received) {
     			textView.append("Weather last updated:\n");
+    			textView.append("  Forecast:\n    ");
+    			printDate(WeatherData.forecastTimeStamp);
+    			textView.append("  Current Observation:\n    ");
     			printDate(WeatherData.timeStamp);
     		}
-    		else
-    		{
+    		else {
     			textView.append("Waiting for weather data.\n");
     		}
     	}
     	
     	if (Preferences.weatherGeolocation) {
     		textView.append("\n");
-    		if (LocationData.received)
-    		{
-    			textView.append("Location last updated:\n");
+    		if (LocationData.received) {
+    			textView.append("Location last updated:\n  ");
     			printDate(LocationData.timeStamp);
     		}
-    		else
-    		{
+    		else {
     			textView.append("Waiting for location data.\n");
     		}
     	}
+    	
+    	if (Utils.isAccessibilityEnabled(this)) {
+	    	if (MetaWatchAccessibilityService.accessibilityRecieved) {
+	    		textView.append("\nAccessibility enabled and working\n");
+	    	}
+	    	else {
+	    		textView.append("\nAccessibility not working - quit MWM then disable and renable Accessibility\n");
+	    	}
+	    }
+    	else {
+    		textView.append("\nAccessibility disabled\n");
+    	}
+    
     	
     	textView.append("\nMessage Queue Length: " + Protocol.getQueueLength());
     	textView.append("\nNotification Queue Length: " + Notification.getQueueLength() + "\n");
