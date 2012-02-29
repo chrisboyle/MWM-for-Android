@@ -91,8 +91,6 @@ public class Idle {
 		return createLcdIdle(context, currentPage);
 	}
 
-	static Bitmap lastIdle = null;
-
 	static synchronized Bitmap createLcdIdle(Context context, int page) {
 		
 		if(!widgetsInitialised) {
@@ -206,9 +204,9 @@ public class Idle {
 	}
 	
 	public static synchronized void sendLcdIdle(Context context) {
-		lastIdle = createLcdIdle(context);
+		Bitmap bitmap = createLcdIdle(context);
 		//Protocol.loadTemplate(0);		
-		Protocol.sendLcdBitmap(lastIdle, MetaWatchService.WatchBuffers.IDLE);
+		Protocol.sendLcdBitmap(bitmap, MetaWatchService.WatchBuffers.IDLE);
 		//Protocol.activateBuffer();
 		Protocol.updateDisplay(0);
 	}

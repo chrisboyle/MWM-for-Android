@@ -1,13 +1,21 @@
 package org.metawatch.manager.widgets;
 
+import java.util.List;
+import java.util.Map;
+
+import org.metawatch.manager.LCDNotification;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
 
-public class NotificationsWidget implements InternalWidget
+public class NotificationIconsWidget implements InternalWidget
 {
-	public final static String id_0 = "notifications_96_32";
-	final static String desc_0 = "Notifications (96x32)";
+	public final static String id_0 = "notification_icons_x_11";
+	final static String desc_0 = "Notification icons (...x11)";
+	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	private Context context;
 
@@ -28,15 +36,24 @@ public class NotificationsWidget implements InternalWidget
 
 		widget.id = id_0;
 		widget.description = desc_0;
-		widget.width = 96;
-		widget.height = 32;
 		widget.priority = 1;
-		widget.bitmap = Bitmap.createBitmap(96, 32, Bitmap.Config.RGB_565);
-		Canvas canvas = new Canvas(bitmap);
-		canvas.drawColor(Color.WHITE);
-		int x=0, y=0;
-
+		widget.width = 1;
+		widget.height = 1;
 		synchronized (LCDNotification.iconNotifications) {
+			if(LCDNotification.iconNotifications.size() == 0) {
+				widget.bitmap = null;
+				result.put(id_0, widget);
+				return;
+			}
+			for (LCDNotification n : LCDNotification.iconNotifications) {
+				widget.width += n.icon.getWidth() + 1;
+				widget.height = Math.max(widget.height, n.icon.getHeight());
+			}
+			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
+			Canvas canvas = new Canvas(widget.bitmap);
+			canvas.drawColor(Color.WHITE);
+			int x=0, y=0;
+
 			for (LCDNotification n : LCDNotification.iconNotifications) {
 				// They're already scaled to (mostly) 13 pixels high; width varies
 				int w = n.icon.getWidth();
@@ -48,8 +65,12 @@ public class NotificationsWidget implements InternalWidget
 			}
 		}
 
+		result.put(id_0, widget);
+	}
 
-
-		return widget;
+	public void shutdown()
+	{
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -31,6 +31,8 @@ public class WidgetManager {
 			widgets.add(new GmailWidget());
 			widgets.add(new WeatherWidget());
 			widgets.add(new CalendarWidget());
+			widgets.add(new NotificationIconsWidget());
+			widgets.add(new NotificationOngoingWidget());
 			//widgets.add(new TestWidget());
 		}
 		

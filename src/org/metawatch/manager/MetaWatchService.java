@@ -172,7 +172,6 @@ public class MetaWatchService extends Service {
 		public static boolean showK9Unread = false;
 		public static boolean denseLayout = true;
 		public static boolean bigNavigation = true;
-		public static boolean dividers = false;
 		public static boolean disallowVibration = false;
 	}
 
@@ -244,8 +243,6 @@ public class MetaWatchService extends Service {
 				"DenseLayout", Preferences.denseLayout);
 		Preferences.bigNavigation = sharedPreferences.getBoolean(
 				"BigNavigation", Preferences.bigNavigation);
-		Preferences.dividers = sharedPreferences.getBoolean(
-				"Dividers", Preferences.dividers);
 		Preferences.disallowVibration = sharedPreferences.getBoolean(
 				"DisallowVibration", Preferences.disallowVibration);
 		Preferences.widgets = sharedPreferences.getString("widgets",

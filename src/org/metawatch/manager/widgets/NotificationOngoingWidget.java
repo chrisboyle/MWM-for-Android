@@ -1,19 +1,41 @@
 package org.metawatch.manager.widgets;
 
+import java.util.List;
+import java.util.Map;
+
+import org.metawatch.manager.FontCache;
+import org.metawatch.manager.LCDNotification;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.Paint.Align;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 
-public class NotificationsWidget implements InternalWidget
+public class NotificationOngoingWidget implements InternalWidget
 {
-	public final static String id_0 = "notifications_96_32";
-	final static String desc_0 = "Notifications (96x32)";
+	public final static String id_0 = "notification_ongoing_96_32";
+	final static String desc_0 = "Notifications ongoing (96x32)";
+	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	private Context context;
+	private TextPaint paintSmall;
+	private TextPaint paintLarge;
 
 	public void init(Context context, List<String> widgetIds)
 	{
 		this.context = context;
+		paintSmall = new TextPaint();
+		paintSmall.setColor(Color.BLACK);
+		paintSmall.setTextSize(FontCache.instance(context).Small.size);
+		paintSmall.setTypeface(FontCache.instance(context).Small.face);
+		paintLarge = new TextPaint();
+		paintLarge.setColor(Color.BLACK);
+		paintLarge.setTextSize(FontCache.instance(context).Large.size);
+		paintLarge.setTypeface(FontCache.instance(context).Large.face);
 	}
 
 	public void refresh(List<String> widgetIds)
@@ -39,7 +61,7 @@ public class NotificationsWidget implements InternalWidget
 		widget.height = 32;
 		widget.priority = 1;
 		widget.bitmap = Bitmap.createBitmap(96, 32, Bitmap.Config.RGB_565);
-		Canvas canvas = new Canvas(bitmap);
+		Canvas canvas = new Canvas(widget.bitmap);
 		canvas.drawColor(Color.WHITE);
 		int x=0, y=0;
 
@@ -112,6 +134,12 @@ public class NotificationsWidget implements InternalWidget
 			}
 		}
 
-		return widget;
+		result.put(id_0, widget);
+	}
+
+	public void shutdown()
+	{
+		// TODO Auto-generated method stub
+		
 	}
 }

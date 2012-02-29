@@ -3,6 +3,7 @@ package org.metawatch.manager;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -10,13 +11,13 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.Log;
 
-class LCDNotification {
-	static LinkedList<LCDNotification> iconNotifications;
-	static LinkedList<LCDNotification> ongoingNotifications;
+public class LCDNotification {
+	public static LinkedList<LCDNotification> iconNotifications;
+	public static LinkedList<LCDNotification> ongoingNotifications;
 	String packageName;
-	Bitmap icon;
-	String text;
-	boolean big;
+	public Bitmap icon;
+	public String text;
+	public boolean big;
 	private StaticLayout staticLayout;
 
 	static {
@@ -61,7 +62,7 @@ class LCDNotification {
 		return packageName.toString().equals("com.google.android.apps.maps");
 	}
 
-	int makeTextLayout(int len, TextPaint p)
+	public int makeTextLayout(int len, TextPaint p)
 	{
 		String s = (len < 0 || len >= text.length()) ? text : text.substring(0, len-3)+"...";
 		staticLayout = new StaticLayout(s, p, 80,
@@ -70,9 +71,9 @@ class LCDNotification {
 		return staticLayout.getHeight();
 	}
 
-	int getTextHeight() { return staticLayout.getHeight(); }
+	public int getTextHeight() { return staticLayout.getHeight(); }
 
-	void drawText(Canvas c)
+	public void drawText(Canvas c)
 	{
 		staticLayout.draw(c);
 	}

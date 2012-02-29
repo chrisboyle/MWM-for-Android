@@ -42,7 +42,7 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 
 	// These apps should mostly be using the sync adapter framework insteadof
 	// pointlessly notifying me...
-	static Pattern excludeTicker = Pattern.compile(".*\\b(updat|sync(h(roni[sz])?)?|refresh|sign)(ing|ed)\\b.*",
+	static Pattern excludeTicker = Pattern.compile(".*\\b((updat|sync(h(roni[sz])?)?|refresh|sign)(ing|ed)|online)\\b.*",
 			Pattern.CASE_INSENSITIVE);
 	static Pattern excludeLine1 = Pattern.compile("(USB|Car mode|RssDemon|RSS) .*", 0);
 	static Pattern progressLike = Pattern.compile("\\d\\d?%|\\d\\d?:\\d\\d", 0);
@@ -81,6 +81,8 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		}
 
 		Bitmap icon = null;
+		android.app.Notification notification = (android.app.Notification) p;
+		boolean isOngoing = (notification.flags & android.app.Notification.FLAG_ONGOING_EVENT) > 0;
 		if (event.getEventType() == TYPE_NOTIFICATION_REMOVED) {
 			// This is my hacked CyanogenMod telling us a Notification went away
 			LCDNotification.removePersistentNotifications(this, isOngoing, packageName.toString(), true);
@@ -102,9 +104,6 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 		} catch (NameNotFoundException e) {
 			/* OK, appName is null */
 		}
-
-		android.app.Notification notification = (android.app.Notification) p;
-		boolean isOngoing = (notification.flags & android.app.Notification.FLAG_ONGOING_EVENT) > 0;
 
 		if (eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
 			Log.d(MetaWatch.TAG,
@@ -246,9 +245,6 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 					return;
 				}
 	
-				PackageManager pm = getPackageManager();
-				PackageInfo packageInfo = null;
-				String appName = null;
 				try {
 					packageInfo = pm.getPackageInfo(packageName.toString(), 0);
 					appName = packageInfo.applicationInfo.loadLabel(pm).toString();
