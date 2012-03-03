@@ -279,8 +279,8 @@ public class WeatherWidget implements InternalWidget {
 	static final String WAIT = "Wait";
 	private Bitmap draw3() {
 		int w;
-		final String high = WeatherData.forecast[0].tempHigh,
-				low = WeatherData.forecast[0].tempLow;
+		final String high = WeatherData.received ? WeatherData.forecast[0].tempHigh : "?",
+				low = WeatherData.received ?  WeatherData.forecast[0].tempLow : "?";
 		if (WeatherData.received) {
 			w = (int)Math.ceil(2 + paintLarge.measureText(WeatherData.temp) +
 					Math.max(paintSmall.measureText(high),
