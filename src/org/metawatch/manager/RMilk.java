@@ -116,7 +116,7 @@ public class RMilk
 		args.put("format", "json");
 		if (! Preferences.rtmToken.isEmpty()) args.put("auth_token", Preferences.rtmToken);
 		URL url = makeURL(API_URL, args);
-		Log.d(MetaWatch.TAG, url.toString());
+		//Log.d(MetaWatch.TAG, url.toString());
 		try {
 			urlConnection = (HttpURLConnection) url.openConnection();
 			BufferedReader br = new BufferedReader(new InputStreamReader(
@@ -126,7 +126,7 @@ public class RMilk
 			while ((line = br.readLine()) != null) {
 				sb.append(line + "\n");
 			}
-			Log.d(MetaWatch.TAG, sb.toString());
+			//Log.d(MetaWatch.TAG, sb.toString());
 			return new JSONObject(new JSONTokener(sb.toString()));
 		} finally {
 			if (urlConnection != null) urlConnection.disconnect();
