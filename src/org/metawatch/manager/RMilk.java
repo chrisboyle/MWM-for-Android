@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.TreeMap;
@@ -17,18 +18,21 @@ import org.json.JSONTokener;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
+
+import org.metawatch.manager.MetaWatchService.Preferences;
+
 
 public class RMilk
 {
 	static final String API_URL = "https://api.rememberthemilk.com/services/rest/",
-			AUTH_URL = "https://www.rememberthemilk.com/services/auth/",
-			API_KEY = null,
-			SECRET = null,
-			TOKEN = null,
-			LIST_ID = null;
+			AUTH_URL = "https://www.rememberthemilk.com/services/auth/";
+	static String frob = null;
 
 	static {
 		// Work around http://code.google.com/p/android/issues/detail?id=2939
@@ -42,28 +46,38 @@ public class RMilk
 		TreeMap<String,String> args = new TreeMap<String,String>();
 		JSONObject o;
 		try {
-			if (API_KEY == null) return "No API key";
-			/*args.clear();
-			args.put("method", "rtm.auth.getFrob");
-			o = call(args);
-			String frob = o.getJSONObject("rsp").getString("frob");
-			args.clear();
-			args.put("frob", frob);
-			args.put("perms", "write");
-			String u = makeURL(AUTH_URL, args).toString();
-			Log.d(MetaWatch.TAG, "frob: "+u);
-			c.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(u))
-					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-			return u;*/
-			// wait for user...
-			/*String frob = "...";
-			args.clear();
-			args.put("method", "rtm.auth.getToken");
-			args.put("frob", frob);
-			o = call(args);
-			String t = o.getJSONObject("rsp").getJSONObject("auth").getString("token");
-			Log.d(MetaWatch.TAG, "token: "+t);
-			return t;*/
+			if (Preferences.rtmKey.isEmpty() || Preferences.rtmSecret.isEmpty()) {
+				return "No API key or secret, see Preferences";
+			}
+			if (Preferences.rtmToken.isEmpty()) {
+				if (frob == null) {
+					args.clear();
+					args.put("method", "rtm.auth.getFrob");
+					o = call(args);
+					frob = o.getJSONObject("rsp").getString("frob");
+					args.clear();
+					args.put("frob", frob);
+					args.put("perms", "write");
+					String u = makeURL(AUTH_URL, args).toString();
+					//Log.d(MetaWatch.TAG, "frob: "+u);
+					c.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(u))
+							.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+					return "Login required, opening browser";
+				} else {
+					args.clear();
+					args.put("method", "rtm.auth.getToken");
+					args.put("frob", frob);
+					frob = null;
+					o = call(args);
+					String t = o.getJSONObject("rsp").getJSONObject("auth").getString("token");
+					//Log.d(MetaWatch.TAG, "token: "+t);
+					Preferences.rtmToken = t;
+					SharedPreferences.Editor ed = PreferenceManager.getDefaultSharedPreferences(c).edit();
+					ed.putString("RTMToken", t);
+					ed.commit();  // TODO apply() on API 9
+				}
+			}
+
 			// we have a token
 			/*args.clear();
 			args.put("method", "rtm.lists.getList");
@@ -74,8 +88,8 @@ public class RMilk
 			// we have a list id
 			args.clear();
 			args.put("method", "rtm.tasks.getList");
-			args.put("list_id", LIST_ID);  // or "list:Supermarket" in the filter
-			args.put("filter", "status:incomplete");
+			//args.put("list_id", LIST_ID);  // or "list:Supermarket" in the filter
+			args.put("filter", Preferences.rtmFilter);
 			o = call(args);
 			JSONArray list = o.getJSONObject("rsp").getJSONObject("tasks")
 					.optJSONArray("list");
@@ -101,7 +115,7 @@ public class RMilk
 	{
 		HttpURLConnection urlConnection = null;
 		args.put("format", "json");
-		if (TOKEN != null) args.put("auth_token", TOKEN);
+		if (! Preferences.rtmToken.isEmpty()) args.put("auth_token", Preferences.rtmToken);
 		URL url = makeURL(API_URL, args);
 		Log.d(MetaWatch.TAG, url.toString());
 		try {
@@ -122,13 +136,13 @@ public class RMilk
 
 	public static URL makeURL(String svc, TreeMap<String,String> args)
 	{
-		args.put("api_key", API_KEY);
+		args.put("api_key", Preferences.rtmKey);
 		args.put("api_sig", sign(args));
 		String q = "?";
 		// TODO proper URL encoder/builder
 		for (String k : args.keySet()) {
 			if (q.length() > 1) q += "&";
-			q += k + "=" + args.get(k);
+			q += URLEncoder.encode(k) + "=" + URLEncoder.encode(args.get(k));
 		}
 		try {
 			return new URL(svc + q);
@@ -139,7 +153,7 @@ public class RMilk
 
 	public static String sign(TreeMap<String,String> args)
 	{
-		String s = SECRET;
+		String s = Preferences.rtmSecret;
 		for (String k : args.keySet()) {
 			s += k + args.get(k);
 		}

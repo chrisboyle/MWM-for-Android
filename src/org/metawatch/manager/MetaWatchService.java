@@ -173,6 +173,10 @@ public class MetaWatchService extends Service {
 		public static boolean denseLayout = true;
 		public static boolean bigNavigation = true;
 		public static boolean disallowVibration = false;
+		public static String rtmKey = "";
+		public static String rtmSecret = "";
+		public static String rtmFilter = "status:incomplete";
+		public static String rtmToken = "";
 	}
 
 	final class WatchType {
@@ -247,6 +251,14 @@ public class MetaWatchService extends Service {
 				"DisallowVibration", Preferences.disallowVibration);
 		Preferences.widgets = sharedPreferences.getString("widgets",
 				Preferences.widgets);
+		Preferences.rtmKey = sharedPreferences.getString(
+				"RTMKey", Preferences.rtmKey);
+		Preferences.rtmSecret = sharedPreferences.getString(
+				"RTMSecret", Preferences.rtmSecret);
+		Preferences.rtmFilter = sharedPreferences.getString(
+				"RTMFilter", Preferences.rtmFilter);
+		Preferences.rtmToken = sharedPreferences.getString(
+				"RTMToken", Preferences.rtmToken);
 
 		try {
 			Preferences.fontSize = Integer.valueOf(sharedPreferences.getString(
@@ -850,7 +862,7 @@ public class MetaWatchService extends Service {
 				break;
 			case Protocol.RTM:
 				String result = RMilk.getTasksText(context);
-				NotificationBuilder.createSmart(context, "Shopping", result, null, new VibratePattern(false,0,0,0));
+				NotificationBuilder.createSmart(context, "RTM Tasks", result, null, new VibratePattern(false,0,0,0));
 				break;
 				
 			case Idle.IDLE_NEXT_PAGE:

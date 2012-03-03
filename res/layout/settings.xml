@@ -338,6 +338,28 @@
 	</PreferenceScreen>
 	
 	<PreferenceScreen
+		android:title="@string/settings_rmilk">
+		<EditTextPreference
+			android:title="API Key"
+			android:key="RTMKey"
+			android:summary="API Key for Remember The Milk"
+			android:defaultValue=""
+			/>
+		<EditTextPreference
+			android:title="API Secret"
+			android:key="RTMSecret"
+			android:summary="API Secret for Remember The Milk"
+			android:defaultValue=""
+			/>
+		<EditTextPreference
+			android:title="Filter"
+			android:key="RTMFilter"
+			android:summary="Which tasks to show e.g. status:incomplete list:Supermarket"
+			android:defaultValue="status:incomplete"
+			/>
+		</PreferenceScreen>
+
+	<PreferenceScreen
 		android:title="@string/settings_Other"
 		>
 		
