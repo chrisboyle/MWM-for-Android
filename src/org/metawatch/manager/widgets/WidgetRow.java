@@ -57,7 +57,8 @@ public class WidgetRow {
 			}
 		}
 		
-		int space = (96-totalWidth)/(widgets.size()+1);		
+		boolean justify = false;
+		int space = justify ? (96-totalWidth)/(widgets.size()+1) : 1;
 		int x=space;
 		for(WidgetData widget : widgets) {
 			canvas.drawBitmap(widget.bitmap, x,

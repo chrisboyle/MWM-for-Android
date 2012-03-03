@@ -135,7 +135,7 @@ public class Idle {
 			}			
 			Map<String,WidgetData> widgetData = WidgetManager.refreshWidgets(widgetsDesired);
 			
-			int space = (64 - (rows.size()*32)) / (rows.size()+1);
+			int space = (int)Math.max(1, (64 - (rows.size()*32)) / (rows.size()+1));
 			int yPos = 32 + space;
 			
 			for(WidgetRow row : rows) {

@@ -17,8 +17,8 @@ import android.text.TextPaint;
 
 public class NotificationOngoingWidget implements InternalWidget
 {
-	public final static String id_0 = "notification_ongoing_96_32";
-	final static String desc_0 = "Notifications ongoing (96x32)";
+	public final static String id_0 = "notification_ongoing_96_96";
+	final static String desc_0 = "Notifications ongoing (96x96)";
 	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	private Context context;
@@ -58,13 +58,14 @@ public class NotificationOngoingWidget implements InternalWidget
 		widget.id = id_0;
 		widget.description = desc_0;
 		widget.width = 96;
-		widget.height = 32;
+		widget.height = 96;
 		widget.priority = 1;
-		widget.bitmap = Bitmap.createBitmap(96, 32, Bitmap.Config.RGB_565);
+		widget.bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(widget.bitmap);
 		canvas.drawColor(Color.WHITE);
 		int x=0, y=0;
 
+		// Draw any prioritised "big" notifications
 		for (LCDNotification n : LCDNotification.ongoingNotifications) {
 			if (! n.big) continue;
 			canvas.save();
@@ -77,7 +78,8 @@ public class NotificationOngoingWidget implements InternalWidget
 			y += layout.getHeight() + 1;
 		}
 
-		int pxRemain = 96 - y;
+		// Now the rest
+		int pxRemain = 51 - y;  // TODO! pass down to here the amount of space available
 		synchronized (LCDNotification.ongoingNotifications) {
 			int maxW = 13;
 			int[] heights = new int[LCDNotification.ongoingNotifications.size()];
