@@ -20,16 +20,17 @@ public class WidgetRow {
 		return widgetIDs;
 	}
 	
-	public void draw(Map<String,WidgetData> widgetData, Canvas canvas, int y)
+	public int draw(Map<String,WidgetData> widgetData, Canvas canvas, int y)
 	{
 		List<WidgetData> widgets = new ArrayList<WidgetData>();
 				
-		int totalWidth = 0;
+		int totalWidth = 0, maxHeight = 0;
 		for( String id : widgetIDs ) {
 			WidgetData widget = widgetData.get(id);
 			if(widget!=null && widget.bitmap!=null && widget.priority>-1) {
 				widgets.add(widget);
 				totalWidth += widget.width;
+				if (widget.height > maxHeight) maxHeight = widget.height;
 			}
 		}
 		
@@ -52,7 +53,7 @@ public class WidgetRow {
 			}
 			else
 			{
-				return;
+				return 0;
 			}
 		}
 		
@@ -60,12 +61,10 @@ public class WidgetRow {
 		int x=space;
 		for(WidgetData widget : widgets) {
 			canvas.drawBitmap(widget.bitmap, x,
-					y + 16 - widget.height/2, null);
+					y + maxHeight/2 - widget.height/2, null);
 			x += (space+widget.width);
 		}
-		
-	}
-	
 
-	
+		return maxHeight;
+	}
 }

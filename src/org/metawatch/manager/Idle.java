@@ -139,8 +139,8 @@ public class Idle {
 			int yPos = 32 + space;
 			
 			for(WidgetRow row : rows) {
-				row.draw(widgetData, canvas, yPos);
-				yPos += 32 + space;
+				int h = row.draw(widgetData, canvas, yPos);
+				yPos += h + space;
 			}
 				
 		}
