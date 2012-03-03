@@ -31,6 +31,9 @@ public class WeatherWidget implements InternalWidget {
 	public final static String id_2 = "weather_fc_96_32";
 	final static String desc_2 = "Weather Forecast (96x32)";
 	
+	public final static String id_3 = "weather_x_11";
+	final static String desc_3 = "Temperatures today (...x11)";
+	
 	private Context context;
 	private TextPaint paintSmall;
 	private TextPaint paintSmallOutline;
@@ -111,6 +114,20 @@ public class WeatherWidget implements InternalWidget {
 			
 			result.put(widget.id, widget);
 		}
+		
+		if(widgetIds == null || widgetIds.contains(id_3)) {
+			InternalWidget.WidgetData widget = new InternalWidget.WidgetData();
+			
+			widget.id = id_3;
+			widget.description = desc_3;
+			widget.height = 11;
+			
+			widget.bitmap = draw3();
+			widget.width = widget.bitmap.getWidth();
+			widget.priority = calcPriority();
+			
+			result.put(widget.id, widget);
+		}
 	}
 	
 	private int calcPriority()
@@ -134,10 +151,10 @@ public class WeatherWidget implements InternalWidget {
 								
 			// temperatures
 			if (WeatherData.celsius) {
-				Utils.drawOutlinedText(WeatherData.temp+"°C", canvas, 0, 7, paintSmall, paintSmallOutline);
+				Utils.drawOutlinedText(WeatherData.temp+"Â°C", canvas, 0, 7, paintSmall, paintSmallOutline);
 			}
 			else {
-				Utils.drawOutlinedText(WeatherData.temp+"°F", canvas, 0, 7, paintSmall, paintSmallOutline);
+				Utils.drawOutlinedText(WeatherData.temp+"Â°F", canvas, 0, 7, paintSmall, paintSmallOutline);
 			}
 			paintLarge.setTextAlign(Paint.Align.LEFT);
 						
@@ -259,5 +276,32 @@ public class WeatherWidget implements InternalWidget {
 		return bitmap;
 	}
 
+	static final String WAIT = "Wait";
+	private Bitmap draw3() {
+		int w;
+		final String high = WeatherData.forecast[0].tempHigh,
+				low = WeatherData.forecast[0].tempLow;
+		if (WeatherData.received) {
+			w = (int)Math.ceil(2 + paintLarge.measureText(WeatherData.temp) +
+					Math.max(paintSmall.measureText(high),
+							paintSmall.measureText(low)));
+		} else {
+			w = (int) Math.ceil(2 + paintSmall.measureText(WAIT));
+		}
+		Bitmap bitmap = Bitmap.createBitmap(w, 11, Bitmap.Config.RGB_565);
+		Canvas canvas = new Canvas(bitmap);
+		canvas.drawColor(Color.WHITE);
 
+		if (WeatherData.received) {
+			canvas.drawText(WeatherData.temp, 1, 11, paintLarge);
+			paintSmall.setTextAlign(Align.RIGHT);
+			canvas.drawText(high, w, 5, paintSmall);
+			canvas.drawText(low,  w, 11, paintSmall);
+			paintSmall.setTextAlign(Align.LEFT);
+		} else {
+			canvas.drawText(WAIT, 0, 8, paintSmall);
+		}
+
+		return bitmap;
+	}
 }
