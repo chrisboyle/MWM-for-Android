@@ -25,13 +25,16 @@
  /*****************************************************************************
   * MetaWatch.java                                                            *
   * MetaWatch                                                                 *
-  * Main activity with menu                                                            *
+  * Main activity with tab container                                          *
   *                                                                           *
   *                                                                           *
   *****************************************************************************/
 
+
 package org.metawatch.manager;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -40,15 +43,19 @@ import org.metawatch.manager.MetaWatchService.WeatherProvider;
 import org.metawatch.manager.Monitors.LocationData;
 import org.metawatch.manager.Monitors.WeatherData;
 
-import android.app.Activity;
+import com.bugsense.trace.BugSenseHandler;
+
 import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
+import android.app.TabActivity;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -61,18 +68,19 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.webkit.WebView;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-public class MetaWatch extends Activity {
-
+public class MetaWatch extends TabActivity {
+   
 	public static final String TAG = "MetaWatch";
 	
-	private TextView textView;
-	
-	private ToggleButton toggleButton;
+	public static TextView textView = null;	
+	public static ToggleButton toggleButton = null;
 	
 	/** Messenger for communicating with service. */
     Messenger mService = null;
@@ -80,13 +88,68 @@ public class MetaWatch extends Activity {
     /** Flag indicating whether we have called bind on the service. */
     boolean mIsBound;
     
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-                   
-        textView = (TextView) findViewById(R.id.textview);
+    long startupTime = 0;
         
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // If you want to use BugSense for your fork, register with them
+        // and place your API key in /assets/bugsense.txt
+        // (This prevents me receiving reports of crashes from forked versions
+        // which is somewhat confusing!)      
+        try {
+			InputStream inputStream = getAssets().open("bugsense.txt");
+			String key = Utils.ReadInputStream(inputStream);
+			key=key.trim();
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "Using bugsense key '"+key+"'");
+			BugSenseHandler.setup(this, key);
+		} catch (IOException e) {
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "No bugsense keyfile found");
+		}
+        
+        startupTime = System.currentTimeMillis();
+        
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        
+        final Resources res = getResources();
+        final TabHost tabHost = getTabHost();
+
+        tabHost.addTab(tabHost.newTabSpec("tab1")
+                .setIndicator("Status",res.getDrawable(R.drawable.ic_tab_status))
+                .setContent(new Intent(this, MetaWatchStatus.class)));
+
+        tabHost.addTab(tabHost.newTabSpec("tab2")
+                .setIndicator("Preferences",res.getDrawable(R.drawable.ic_tab_settings))
+                .setContent(new Intent(this, Settings.class)));
+        
+        tabHost.addTab(tabHost.newTabSpec("tab3")
+                .setIndicator("Widgets",res.getDrawable(R.drawable.ic_tab_widgets))
+                .setContent(new Intent(this, WidgetSetup.class)));
+        
+        tabHost.addTab(tabHost.newTabSpec("tab4")
+                .setIndicator("Tests",res.getDrawable(R.drawable.ic_tab_test))
+                .setContent(new Intent(this, Test.class)));
+        
+        // This tab sets the intent flag so that it is recreated each time
+        // the tab is clicked.
+        //tabHost.addTab(tabHost.newTabSpec("tab3")
+        //        .setIndicator("destroy")
+        //        .setContent(new Intent(this, Controls2.class)
+        //                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)));
+        
+        synchronized (MetaWatchStatus.textView) {
+        	if (MetaWatchStatus.textView==null) {
+		        try {
+					MetaWatchStatus.textView.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					finish();
+				}
+        	}
+	        textView = MetaWatchStatus.textView;
+	        toggleButton = MetaWatchStatus.toggleButton;
+        }
     }
 
 	@Override
@@ -108,7 +171,6 @@ public class MetaWatch extends Activity {
 		}
 		
 	
-		toggleButton = (ToggleButton) findViewById(R.id.toggleButton);
 		toggleButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
             	if(toggleButton.isChecked())
@@ -174,7 +236,7 @@ public class MetaWatch extends Activity {
             }
             catch(IllegalArgumentException e) {
             	// The service wasn't running
-            	Log.d(MetaWatch.TAG, e.getMessage());          	
+            	if (Preferences.logging) Log.d(MetaWatch.TAG, e.getMessage());          	
             }
         }
     	
@@ -200,13 +262,14 @@ public class MetaWatch extends Activity {
     void showAbout() {
     	
     	WebView webView = new WebView(this);
-		String html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /><title>About</title></head><body>" + 
+		String html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" /><title>About</title></head><body><center>" + 
 						"<h1>MetaWatch</h1>" +
+						"<img src=\"splash.png\">" +
 						"<p>Version " + Utils.getVersion(this) + ".</p>" +
-						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald, Kyle Schroeder and Chris Boyle.</p>" +
-						"<p>ï¿½ Copyright 2011-2012 Meta Watch Ltd.</p>" +
-						"</body></html>";
-        webView.loadData(html, "text/html", "utf-8");
+						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald and Kyle Schroeder and Chris Boyle.</p>" +
+						"<p>© Copyright 2011-2012 Meta Watch Ltd.</p>" +
+						"</center></body></html>";
+        webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "utf-8", null);
         
         new AlertDialog.Builder(this).setView(webView).setCancelable(true).setPositiveButton("OK", new DialogInterface.OnClickListener() {			
 			//@Override
@@ -237,16 +300,16 @@ public class MetaWatch extends Activity {
     	
     	switch (MetaWatchService.connectionState) {
 	    	case MetaWatchService.ConnectionState.DISCONNECTED:
-	    		textView.append("DISCONNECTED\n");
+	    		Utils.appendColoredText(textView, "DISCONNECTED\n", Color.RED);
 	    		break;
 	    	case MetaWatchService.ConnectionState.CONNECTING:
-	    		textView.append("CONNECTING\n");
+	    		Utils.appendColoredText(textView, "CONNECTING\n", Color.YELLOW);
 	    		break;
 	    	case MetaWatchService.ConnectionState.CONNECTED:
-	    		textView.append("CONNECTED\n");
+	    		Utils.appendColoredText(textView, "CONNECTED\n", Color.GREEN);
 	    		break;
 	    	case MetaWatchService.ConnectionState.DISCONNECTING:
-	    		textView.append("DISCONNECTING\n");
+	    		Utils.appendColoredText(textView, "DISCONNECTING\n", Color.YELLOW);
 	    		break;
     	}
     	
@@ -276,18 +339,22 @@ public class MetaWatch extends Activity {
     	}
     	
     	if (Utils.isAccessibilityEnabled(this)) {
-	    	if (MetaWatchAccessibilityService.accessibilityRecieved) {
-	    		textView.append("\nAccessibility enabled and working\n");
+	    	if (MetaWatchAccessibilityService.accessibilityReceived) {
+	    		Utils.appendColoredText(textView, "\nAccessibility enabled and working\n", Color.GREEN);
 	    	}
 	    	else {
-	    		textView.append("\nAccessibility not working - quit MWM then disable and renable Accessibility\n");
+	    		if(startupTime==0 || System.currentTimeMillis()-startupTime<60*1000) {
+	    			textView.append("\nAccessibility enabled - waiting for notifications\n");
+	    		}
+	    		else {
+	    			Utils.appendColoredText(textView, "\nAccessibility not working - disable and renable Accessibility in the system settings\n", Color.RED);
+	    		}
 	    	}
 	    }
     	else {
     		textView.append("\nAccessibility disabled\n");
     	}
     
-    	
     	textView.append("\nMessage Queue Length: " + Protocol.getQueueLength());
     	textView.append("\nNotification Queue Length: " + Notification.getQueueLength() + "\n");
     	if (Protocol.isStalled()) {
@@ -298,7 +365,7 @@ public class MetaWatch extends Activity {
 		    		Protocol.resetStalledFlag();
 		    		stopService();
 		    		startService();
-		    		Log.d(MetaWatch.TAG, "Restarted stalled service");
+		    		if (Preferences.logging) Log.d(MetaWatch.TAG, "Restarted stalled service");
 	    		}
     		}
     	}	
@@ -388,5 +455,4 @@ public class MetaWatch extends Activity {
             textView.append("Binding.\n");
         }
     }
-    
 }

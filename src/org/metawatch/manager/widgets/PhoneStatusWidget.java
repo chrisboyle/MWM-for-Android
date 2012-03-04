@@ -4,25 +4,27 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.metawatch.manager.FontCache;
+import org.metawatch.manager.Monitors;
 import org.metawatch.manager.Utils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint.Align;
 import android.text.TextPaint;
 
-public class K9Widget implements InternalWidget {
+public class PhoneStatusWidget implements InternalWidget {
 
-	public final static String id_0 = "unreadK9_24_32";
-	final static String desc_0 = "Unread K9 email (24x32)";
+	public final static String id_0 = "phoneStatus_24_32";
+	final static String desc_0 = "Phone Battery Status (24x32)";
 	
 	private Context context;
 	private TextPaint paintSmall;
-	
+		
 	public void init(Context context, ArrayList<CharSequence> widgetIds) {
 		this.context = context;
-
+		
 		paintSmall = new TextPaint();
 		paintSmall.setColor(Color.BLACK);
 		paintSmall.setTextSize(FontCache.instance(context).Small.size);
@@ -40,11 +42,11 @@ public class K9Widget implements InternalWidget {
 
 	public void get(ArrayList<CharSequence> widgetIds, Map<String,WidgetData> result) {
 
-		if(widgetIds == null || widgetIds.contains(id_0)) {
+		if(widgetIds == null || widgetIds.contains(id_0)) {		
 			result.put(id_0, GenWidget(id_0));
 		}
 	}
-		
+	
 	private InternalWidget.WidgetData GenWidget(String widget_id) {
 		InternalWidget.WidgetData widget = new InternalWidget.WidgetData();
 
@@ -53,13 +55,23 @@ public class K9Widget implements InternalWidget {
 		widget.width = 24;
 		widget.height = 32;
 		
-		Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_k9mail.bmp");
+		Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_phone_status.bmp");
 
-		int count = Utils.getUnreadK9Count(context);
+		int level = Monitors.BatteryData.level;
+		String count = level==-1 ? "-" : level+"%";
 
-		widget.priority = count;		
-		widget.bitmap = Utils.DrawIconCountWidget(context, widget.width, widget.height, icon, count, paintSmall);
+		widget.priority = level==-1 ? 0 : 1;		
+		widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
+		Canvas canvas = new Canvas(widget.bitmap);
+		canvas.drawColor(Color.WHITE);
+		
+		canvas.drawBitmap(icon, 0, 3, null);
+		canvas.drawText(count, 12, 29,  paintSmall);
+	
+		if(level>-1)
+			canvas.drawRect(13, 8 + ((100-level)/10), 19, 18, paintSmall);
 		
 		return widget;
 	}
 }
+	

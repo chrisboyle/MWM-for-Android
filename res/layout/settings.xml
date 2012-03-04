@@ -281,12 +281,6 @@
 			android:defaultValue="false"
 			/>
 		<CheckBoxPreference
-			android:title="Dense layout"
-			android:key="DenseLayout"
-			android:summary="Dense layout with notification icons"
-			android:defaultValue="true"
-			/>
-		<CheckBoxPreference
 			android:title="Big navigation instructions"
 			android:key="BigNavigation"
 			android:summary="(Receiving these at all requires patched Android)"
@@ -388,6 +382,12 @@
 			android:defaultValue="false"
 			/>
 		<CheckBoxPreference
+			android:title="Debug logging"
+			android:key="logging"
+			android:summary="Log events to the debug log - Disable to improve performance - please turn this on and use logcat if reporting problems"
+			android:defaultValue="true"
+			/>
+		<CheckBoxPreference
 			android:title="Log packet details"
 			android:key="logPacketDetails"
 			android:summary="Log details of Bluetooth packets"
@@ -424,9 +424,21 @@
             android:defaultValue="false"
             />
         <CheckBoxPreference
+            android:title="Display splash screen"
+            android:key="DisplaySplashScreen"
+            android:summary="Display MWM splash screen on watch"
+            android:defaultValue="true"
+            />
+        <CheckBoxPreference
 			android:title="Restart if stalled"
 			android:key="AutoRestart"
 			android:summary="Automatically restart the service if it becommes stalled."
+			android:defaultValue="false"
+			/>	
+		<CheckBoxPreference
+			android:title="Haptic feedback"
+			android:key="HapticFeedback"
+			android:summary="Vibrate watch on button presses."
 			android:defaultValue="false"
 			/>	
 			

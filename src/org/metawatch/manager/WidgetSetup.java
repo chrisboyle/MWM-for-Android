@@ -11,12 +11,17 @@ import org.metawatch.manager.widgets.InternalWidget.WidgetData;
 import org.metawatch.manager.widgets.WidgetManager;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SimpleExpandableListAdapter;
 
 public class WidgetSetup extends Activity {
@@ -36,8 +41,7 @@ public class WidgetSetup extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        setContentView(R.layout.widget_setup);
-   
+        setContentView(R.layout.widget_setup);  
     }
     
     public void onConfigurationChanged(Configuration newConfig) {
@@ -73,11 +77,13 @@ public class WidgetSetup extends Activity {
 		groupData = new ArrayList<Map<String, String>>();
 	    childData = new ArrayList<List<Map<String, String>>>();
 
-	    // Add a dummy entry at the end, if all rows have content
+	    // Add dummy entries at the end
 		ArrayList<String> rows = new ArrayList<String>(Arrays.asList(Preferences.widgets.split("\\|")));
 		if (rows.size()>0 && rows.get(rows.size()-1).length()>0) {
 			rows.add("");
 		}
+		while(rows.size()<9)
+			rows.add("");
 			
 		int i=1;
 		for(String line : rows) {
@@ -88,18 +94,21 @@ public class WidgetSetup extends Activity {
 	        
 	        List<Map<String, String>> children = new ArrayList<Map<String, String>>();
 	        
-			String[] widgets = (line+",").split(",");
+			String[] widgets = (line).split(",");
 			for(String widget : widgets) {
+				widget = widget.trim();
 	        	Map<String, String> curChildMap = new HashMap<String, String>();
 	            children.add(curChildMap);
 	            String name = widget;
+	            if(widget==null || widget=="")
+	            	name="<empty>";
 	            if(widgetMap.containsKey(widget))
 	            	name = widgetMap.get(widget).description;
 	            curChildMap.put(NAME, name);
 	            curChildMap.put(ID, widget);
 	        }
 			
-			while(children.size()<5) {
+			while(children.size()<8) {
 	        	Map<String, String> curChildMap = new HashMap<String, String>();
 	            children.add(curChildMap);
 	            curChildMap.put(NAME, "<empty>");
@@ -139,7 +148,7 @@ public class WidgetSetup extends Activity {
         	
         	if(groupPosition>-1 && childPosition>-1) {
         		Map<String,String> curChildMap = childData.get(groupPosition).get(childPosition);
-        		if(id==null) {
+        		if(id==null || id=="") {
     	            curChildMap.put(NAME, "<empty>");
     	            curChildMap.put(ID, "");
         		}
@@ -159,8 +168,32 @@ public class WidgetSetup extends Activity {
     }
     
     private void refreshPreview() {
-    	ImageView v = (ImageView) findViewById(R.id.idlePreview);
-    	v.setImageBitmap(Idle.createLcdIdle(this, 0));
+    	Idle.updateWidgetPages(this);
+    	LinearLayout ll = (LinearLayout) findViewById(R.id.idlePreviews);
+    	
+    	ll.removeAllViews();
+    	  	
+    	int pages = Idle.numPages();
+    	for(int i=0; i<pages; ++i) {
+    		Bitmap bmp = Idle.createLcdIdle(this, true, i);
+    		//LayoutInflater factory = LayoutInflater.from(this);
+    		LayoutInflater factory = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+    		View v = factory.inflate(R.layout.idle_screen_preview, null);
+    		ImageView iv = (ImageView)v.findViewById(R.id.image);
+    		iv.setImageBitmap(bmp);
+    		iv.setClickable(true);
+    		iv.setTag(i);
+    		iv.setOnClickListener(new OnClickListener() {
+    		    //@Override
+    		    public void onClick(View v) {
+    		    	Integer page = (Integer)v.getTag();
+    		        Idle.toPage(page);
+    		        Idle.updateLcdIdle(v.getContext());
+    		    }
+    		});
+    		ll.addView(v);
+    	}
     }
     
     private void storeWidgetLayout() {

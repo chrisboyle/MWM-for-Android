@@ -32,12 +32,12 @@
 
 package org.metawatch.manager;
 
+import org.metawatch.manager.MetaWatchService.Preferences;
 import org.metawatch.manager.Notification.VibratePattern;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 public class ApiIntentReceiver extends BroadcastReceiver {
@@ -50,6 +50,9 @@ public class ApiIntentReceiver extends BroadcastReceiver {
 		// add digital watch check
 		
 		if (action.equals("org.metawatch.manager.APPLICATION_UPDATE")) {
+			//boolean dither = false;
+			//if (intent.hasExtra("requires_dither"))
+			//	dither = true;
 			if (intent.hasExtra("array")) {
 				int[] array = intent.getIntArrayExtra("array");			
 				Application.updateAppMode(context, array);
@@ -67,16 +70,6 @@ public class ApiIntentReceiver extends BroadcastReceiver {
 		
 		if (action.equals("org.metawatch.manager.APPLICATION_STOP")) {
 			Application.stopAppMode(context);
-			return;
-		}
-		
-		if (action.equals("org.metawatch.manager.IDLE_BUTTONS_OVERRIDE")) {
-			Bundle bundle = intent.getExtras();
-			if (bundle.containsKey("buttons")) {
-					Idle.overridenButtons = bundle.getByteArray("buttons");
-			} else {
-				Idle.overridenButtons = null;
-			}
 			return;
 		}
 		
@@ -131,7 +124,7 @@ public class ApiIntentReceiver extends BroadcastReceiver {
 				String text = intent.getStringExtra("text");
 				Notification.addTextNotification(context, text, vibrate,
 						Notification.getDefaultNotificationTimeout(context));
-				Log.d(MetaWatch.TAG,
+				if (Preferences.logging) Log.d(MetaWatch.TAG,
 						"ApiIntentReceiver.onReceive(): sending text notification; text='"
 								+ text + "'");
 			} else if (intent.hasExtra("array")) {

@@ -61,7 +61,7 @@ public class MediaControl {
 	static boolean mediaPlayerActive = false;
 	
 	public static void next(Context context) {
-		Log.d(MetaWatch.TAG, "MediaControl.next()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "MediaControl.next()");
 		if (Preferences.idleMusicControlMethod == MediaControl.MUSICSERVICECOMMAND){
 			context.sendBroadcast(new Intent("com.android.music.musicservicecommand.next"));
 		}
@@ -71,7 +71,7 @@ public class MediaControl {
 	}
 	
 	public static void previous(Context context) {
-		Log.d(MetaWatch.TAG, "MediaControl.previous()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "MediaControl.previous()");
 		if (Preferences.idleMusicControlMethod == MediaControl.MUSICSERVICECOMMAND){
 			context.sendBroadcast(new Intent("com.android.music.musicservicecommand.previous"));
 		}
@@ -81,7 +81,7 @@ public class MediaControl {
 	}
 	
 	public static void togglePause(Context context) {
-		Log.d(MetaWatch.TAG, "MediaControl.togglePause()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "MediaControl.togglePause()");
 		if (Preferences.idleMusicControlMethod == MediaControl.MUSICSERVICECOMMAND){
 			context.sendBroadcast(new Intent("com.android.music.musicservicecommand.togglepause"));
 		}
@@ -107,12 +107,12 @@ public class MediaControl {
 	}
 
 	public static void volumeDown(AudioManager audioManager) {
-		Log.d(MetaWatch.TAG, "MediaControl.volumeDown()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "MediaControl.volumeDown()");
 		audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0);
 	}
 	
 	public static void volumeUp(AudioManager audioManager) {
-		Log.d(MetaWatch.TAG, "MediaControl.volumeUp()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "MediaControl.volumeUp()");
 		audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
 	}
 	
@@ -139,7 +139,7 @@ public class MediaControl {
 
 		/* Ignore if track info hasn't changed. */
 		if (artist.equals(MediaControl.lastArtist) && track.equals(MediaControl.lastTrack) && album.equals(MediaControl.lastAlbum)) {
-			Log.d(MetaWatch.TAG, "updateNowPlaying(): Track info hasn't changed, ignoring");
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "updateNowPlaying(): Track info hasn't changed, ignoring");
 			return;
 		} else {
 			MediaControl.lastArtist = artist;

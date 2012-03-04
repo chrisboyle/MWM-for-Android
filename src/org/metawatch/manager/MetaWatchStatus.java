@@ -1,5 +1,3 @@
-
-
                                                                      
                                                                      
                                                                      
@@ -25,45 +23,36 @@
   *****************************************************************************/
 
  /*****************************************************************************
-  * AlarmReceiver.java                                                        *
-  * AlarmReceiver                                                             *
-  * Receiver for RTC wakeup intents used for weather updates                  *
+  * MetaWatch.java                                                            *
+  * MetaWatch                                                                 *
+  * status activity                                                           *
   *                                                                           *
   *                                                                           *
   *****************************************************************************/
 
 package org.metawatch.manager;
 
-import org.metawatch.manager.MetaWatchService.Preferences;
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.ToggleButton;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
-
-public class AlarmReceiver extends BroadcastReceiver {
-
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		
-		if (Preferences.logging) Log.d(MetaWatch.TAG, "AlarmReceiver.onReceive(): received intent: " + intent.toString());
-		
-		if (intent.hasExtra("action_update")) {
-			
-			Monitors.updateWeatherData(context);
-			
-			return;
+public class MetaWatchStatus extends Activity {
+	
+	public static TextView textView = null;	
+	public static ToggleButton toggleButton = null;
+	    
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+                   
+        textView = (TextView) findViewById(R.id.textview);
+		toggleButton = (ToggleButton) findViewById(R.id.toggleButton);
+		synchronized (MetaWatchStatus.textView) {
+			textView.notify(); // Indicate to the tab container view class that the UI has been created
 		}
-
-		if (intent.hasExtra("action_poll_voltage")) {
-
-			if (MetaWatchService.connectionState == MetaWatchService.ConnectionState.CONNECTED) {
-				Protocol.readBatteryVoltage();
-			}
-
-			return;
-		}		
-		
-	}
-
+        
+    }
+    
 }

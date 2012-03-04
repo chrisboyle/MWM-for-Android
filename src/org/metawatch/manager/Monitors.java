@@ -69,9 +69,11 @@ import org.xml.sax.XMLReader;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.ContentObserver;
 import android.location.Address;
 import android.location.Geocoder;
@@ -79,6 +81,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
@@ -109,6 +112,8 @@ public class Monitors {
 	
 	private static NetworkLocationListener networkLocationListener;
 	
+	private static BroadcastReceiver batteryLevelReceiver;
+	
 	public static class WeatherData {
 		public static boolean updating = false;
 		public static boolean received = false;
@@ -123,6 +128,9 @@ public class Monitors {
 		
 		public static int sunsetH = 19;
 		public static int sunsetM = 0;
+		
+		public static int moonPercentIlluminated = -1;
+		public static int ageOfMoon = -1;
 		
 		public static Forecast[] forecast = null;
 		
@@ -145,24 +153,28 @@ public class Monitors {
 	    public static long timeStamp = 0;
 	}
 	
+	public static class BatteryData {
+		public static int level = -1;
+	}
+	
 	private static Monitors m = new Monitors(); // Static instance for new
 	
 	public static void updateGmailUnreadCount(String account, int count) {
-		Log.d(MetaWatch.TAG, "Monitors.updateGmailUnreadCount(): account='"
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Monitors.updateGmailUnreadCount(): account='"
 				+ account + "' count='" + count + "'");
 		gmailUnreadCounts.put(account, count);
-		Log.d(MetaWatch.TAG,
+		if (Preferences.logging) Log.d(MetaWatch.TAG,
 				"Monitors.updateGmailUnreadCount(): new unread count is: "
 						+ gmailUnreadCounts.get(account));
 	}
 	
 	public static int getGmailUnreadCount() {
-		Log.d(MetaWatch.TAG, "Monitors.getGmailUnreadCount()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Monitors.getGmailUnreadCount()");
 		int totalCount = 0;
 		for (String key : gmailUnreadCounts.keySet()) {
 			Integer accountCount = gmailUnreadCounts.get(key);
 			totalCount += accountCount.intValue();
-			Log.d(MetaWatch.TAG, "Monitors.getGmailUnreadCount(): account='"
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "Monitors.getGmailUnreadCount(): account='"
 					+ key + "' accountCount='" + accountCount
 					+ "' totalCount='" + totalCount + "'");
 		}
@@ -171,18 +183,20 @@ public class Monitors {
 	
 	public static int getGmailUnreadCount(String account) {
 		int count = gmailUnreadCounts.get(account);
-		Log.d(MetaWatch.TAG, "Monitors.getGmailUnreadCount('"+account+"') returning " + count);
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Monitors.getGmailUnreadCount('"+account+"') returning " + count);
 		return count;
 	}
 	
 	public static void start(Context context, TelephonyManager telephonyManager) {
 		// start weather updater
 		
-		Log.d(MetaWatch.TAG,
+		if (Preferences.logging) Log.d(MetaWatch.TAG,
 				"Monitors.start()");
+		
+		createBatteryLevelReciever(context);
 				
 		if (Preferences.weatherGeolocation) {
-			Log.d(MetaWatch.TAG,
+			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Initialising Geolocation");
 			
 			locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -195,7 +209,7 @@ public class Monitors {
 			RefreshLocation();
 		}
 		else {
-			Log.d(MetaWatch.TAG,"Geolocation disabled");
+			if (Preferences.logging) Log.d(MetaWatch.TAG,"Geolocation disabled");
 		}
 		
 		CallStateListener phoneListener = new CallStateListener(context);
@@ -224,6 +238,7 @@ public class Monitors {
 			contentResolverCalls.registerContentObserver(android.provider.CallLog.Calls.CONTENT_URI, true, contentObserverCalls);
 		} catch (Exception x) {
 		}
+	
 		
 		// temporary one time update
 		updateWeatherData(context);
@@ -246,9 +261,9 @@ public class Monitors {
 		}
 	}
 	
-	public static void stop() {
+	public static void stop(Context context) {
 		
-		Log.d(MetaWatch.TAG,
+		if (Preferences.logging) Log.d(MetaWatch.TAG,
 				"Monitors.stop()");
 		
 		contentResolverMessages.unregisterContentObserver(contentObserverMessages);
@@ -257,7 +272,12 @@ public class Monitors {
 				locationManager.removeUpdates(networkLocationListener);
 			}
 		}
-		stopAlarmTicker();		
+		stopAlarmTicker();
+		
+		if (batteryLevelReceiver!=null) {
+			context.unregisterReceiver(batteryLevelReceiver);
+			batteryLevelReceiver=null;
+		}
 	}
 	
 	private static synchronized void updateWeatherDataGoogle(Context context) {
@@ -272,7 +292,7 @@ public class Monitors {
 				long diff = currentTime - WeatherData.timeStamp;
 				
 				if (diff < 5 * 60*1000) {
-					Log.d(MetaWatch.TAG,
+					if (Preferences.logging) Log.d(MetaWatch.TAG,
 							"Skipping weather update - updated less than 5m ago");
 
             		//IdleScreenWidgetRenderer.sendIdleScreenWidgetUpdate(context);
@@ -283,7 +303,7 @@ public class Monitors {
 			
 			WeatherData.updating = true;
 			
-			Log.d(MetaWatch.TAG,
+			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Monitors.updateWeatherDataGoogle(): start");
 		
 			String queryString;
@@ -311,7 +331,7 @@ public class Monitors {
 					}
 				}
 				catch (IOException e){
-					Log.e(MetaWatch.TAG, "Exception while retreiving postalcode", e);
+					if (Preferences.logging) Log.e(MetaWatch.TAG, "Exception while retreiving postalcode", e);
 				}
 				
 				if (PostalCode.equals("")){
@@ -396,9 +416,9 @@ public class Monitors {
 			MetaWatchService.notifyClients();
 			
 		} catch (Exception e) {
-			Log.e(MetaWatch.TAG, "Exception while retreiving weather", e);
+			if (Preferences.logging) Log.e(MetaWatch.TAG, "Exception while retreiving weather", e);
 		} finally {
-			Log.d(MetaWatch.TAG,
+			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Monitors.updateWeatherData(): finish");
 		}
 		
@@ -417,7 +437,7 @@ public class Monitors {
 				
 				long diff = currentTime - WeatherData.timeStamp;
 				if (diff < 5 * 60*1000) {
-					Log.d(MetaWatch.TAG,
+					if (Preferences.logging) Log.d(MetaWatch.TAG,
 							"Skipping weather update - updated less than 5m ago");
 					Idle.updateLcdIdle(context);
 					return;
@@ -426,7 +446,7 @@ public class Monitors {
 			
 			WeatherData.updating = true;
 			
-			Log.d(MetaWatch.TAG,
+			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Monitors.updateWeatherDataWunderground(): start");
 			
 			if (LocationData.received && Preferences.wundergroundKey != "") {
@@ -444,7 +464,7 @@ public class Monitors {
 				
 				String requestUrl =  "http://api.wunderground.com/api/"+Preferences.wundergroundKey+"/geolookup/conditions/"+forecastQuery+"q/"+latLng+".json";
 				
-				Log.d(MetaWatch.TAG,
+				if (Preferences.logging) Log.d(MetaWatch.TAG,
 						"Request: "+requestUrl);
 				
 				JSONObject json = getJSONfromURL( requestUrl );
@@ -460,6 +480,9 @@ public class Monitors {
 					JSONObject sunset = moon.getJSONObject("sunset");
 					WeatherData.sunsetH = sunset.getInt("hour");
 					WeatherData.sunsetM = sunset.getInt("minute");
+					
+					WeatherData.moonPercentIlluminated = moon.getInt("percentIlluminated");
+					WeatherData.ageOfMoon = moon.getInt("ageOfMoon");
 				}
 				
 				boolean isDay = true;
@@ -525,9 +548,9 @@ public class Monitors {
 
 			
 		} catch (Exception e) {
-			Log.e(MetaWatch.TAG, "Exception while retreiving weather", e);
+			if (Preferences.logging) Log.e(MetaWatch.TAG, "Exception while retreiving weather", e);
 		} finally {
-			Log.d(MetaWatch.TAG,
+			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Monitors.updateWeatherData(): finish");
 			
 			WeatherData.updating = false;			
@@ -631,7 +654,7 @@ public class Monitors {
 	}
 	
 	static void startAlarmTicker(Context context) {		
-		Log.d(MetaWatch.TAG, "startAlarmTicker()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "startAlarmTicker()");
 		alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 		intent = new Intent(context, AlarmReceiver.class);
 		intent.putExtra("action_update", "update");
@@ -674,7 +697,7 @@ public class Monitors {
 		public void onChange(boolean selfChange) {
 			super.onChange(selfChange);			
 			// change in call history database
-			Log.d(MetaWatch.TAG, "call history change");
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "call history change");
 			Idle.updateLcdIdle(context);
 		}
 	}
@@ -694,13 +717,13 @@ public class Monitors {
 			
 			LocationData.timeStamp = location.getTime();
 			
-			Log.d(MetaWatch.TAG, "location changed "+location.toString() );
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "location changed "+location.toString() );
 			
 			LocationData.received = true;
 			MetaWatchService.notifyClients();
 			
 			if (!WeatherData.received && !WeatherData.updating) {
-				Log.d(MetaWatch.TAG, "First location - getting weather");
+				if (Preferences.logging) Log.d(MetaWatch.TAG, "First location - getting weather");
 				Monitors.updateWeatherData(context);
 			}
 		}
@@ -732,7 +755,7 @@ public class Monitors {
 			is = entity.getContent();
 
 		}catch(Exception e){
-			Log.e(MetaWatch.TAG, "Error in http connection "+e.toString());
+			if (Preferences.logging) Log.e(MetaWatch.TAG, "Error in http connection "+e.toString());
 		}
 
 		//convert response to string
@@ -746,7 +769,7 @@ public class Monitors {
 			is.close();
 			result=sb.toString();
 		}catch(Exception e){
-			Log.e(MetaWatch.TAG, "Error converting result "+e.toString());
+			if (Preferences.logging) Log.e(MetaWatch.TAG, "Error converting result "+e.toString());
 		}
 
 		//dump to sdcard for debugging
@@ -770,10 +793,34 @@ public class Monitors {
 		try{
 	        	jArray = new JSONObject(result);
 		}catch(JSONException e){
-			Log.e(MetaWatch.TAG, "Error parsing data "+e.toString());
+			if (Preferences.logging) Log.e(MetaWatch.TAG, "Error parsing data "+e.toString());
 		}
 
 		return jArray;
+	}
+	
+
+
+	private static void createBatteryLevelReciever(Context context) {
+		if(batteryLevelReceiver!=null)
+			return;
+		
+		batteryLevelReceiver = new BroadcastReceiver() {
+			public void onReceive(Context context, Intent intent) {
+				int rawlevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+				int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+				int level = -1;
+				if (rawlevel >= 0 && scale > 0) {
+					level = (rawlevel * 100) / scale;
+				}
+				if(BatteryData.level != level) {
+					//if (Preferences.logging) Log.d(MetaWatch.TAG, "Battery level changed: "+rawlevel+"/"+scale+" - "+level+"%");
+					BatteryData.level = level;
+					Idle.updateLcdIdle(context);
+				}
+			}
+		};
+		context.registerReceiver(batteryLevelReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 	}
 
 	

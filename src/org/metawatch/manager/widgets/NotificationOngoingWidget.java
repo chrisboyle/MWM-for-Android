@@ -1,6 +1,6 @@
 package org.metawatch.manager.widgets;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.metawatch.manager.FontCache;
@@ -11,21 +11,20 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.Paint.Align;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
 public class NotificationOngoingWidget implements InternalWidget
 {
-	public final static String id_0 = "notification_ongoing_96_96";
-	final static String desc_0 = "Notifications ongoing (96x96)";
+	public final static String id_0 = "notification_ongoing";
+	final static String desc_0 = "Notifications ongoing (96x51)";
 	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	private Context context;
 	private TextPaint paintSmall;
 	private TextPaint paintLarge;
 
-	public void init(Context context, List<String> widgetIds)
+	public void init(Context context, ArrayList<CharSequence> widgetIds)
 	{
 		this.context = context;
 		paintSmall = new TextPaint();
@@ -38,7 +37,7 @@ public class NotificationOngoingWidget implements InternalWidget
 		paintLarge.setTypeface(FontCache.instance(context).Large.face);
 	}
 
-	public void refresh(List<String> widgetIds)
+	public void refresh(ArrayList<CharSequence> widgetIds)
 	{
 	}
 
@@ -49,7 +48,7 @@ public class NotificationOngoingWidget implements InternalWidget
 		return s;
 	}
 
-	public void get(List<String> widgetIds, Map<String,WidgetData> result)
+	public void get(ArrayList<CharSequence> widgetIds, Map<String,WidgetData> result)
 	{
 		if(widgetIds != null && ! widgetIds.contains(id_0)) return;
 
@@ -58,9 +57,9 @@ public class NotificationOngoingWidget implements InternalWidget
 		widget.id = id_0;
 		widget.description = desc_0;
 		widget.width = 96;
-		widget.height = 96;
+		widget.height = 51;
 		widget.priority = 1;
-		widget.bitmap = Bitmap.createBitmap(96, 96, Bitmap.Config.RGB_565);
+		widget.bitmap = Bitmap.createBitmap(96, 51, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(widget.bitmap);
 		canvas.drawColor(Color.WHITE);
 		int x=0, y=0;

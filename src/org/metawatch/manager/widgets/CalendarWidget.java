@@ -1,9 +1,12 @@
 package org.metawatch.manager.widgets;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Map;
 
 import org.metawatch.manager.FontCache;
+import org.metawatch.manager.MetaWatch;
+import org.metawatch.manager.MetaWatchService.Preferences;
 import org.metawatch.manager.Utils;
 
 import android.content.Context;
@@ -14,6 +17,7 @@ import android.graphics.Paint.Align;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
+import android.util.Log;
 
 public class CalendarWidget implements InternalWidget {
 
@@ -25,10 +29,11 @@ public class CalendarWidget implements InternalWidget {
 	
 	private Context context;
 	private TextPaint paintSmall;
+	private TextPaint paintNumerals;
 
 	private String meetingTime = "None";
 	
-	public void init(Context context, List<String> widgetIds) {
+	public void init(Context context, ArrayList<CharSequence> widgetIds) {
 		this.context = context;
 		
 		paintSmall = new TextPaint();
@@ -36,18 +41,31 @@ public class CalendarWidget implements InternalWidget {
 		paintSmall.setTextSize(FontCache.instance(context).Small.size);
 		paintSmall.setTypeface(FontCache.instance(context).Small.face);
 		paintSmall.setTextAlign(Align.CENTER);
-
+		
+		paintNumerals = new TextPaint();
+		paintNumerals.setColor(Color.BLACK);
+		paintNumerals.setTextSize(FontCache.instance(context).Numerals.size);
+		paintNumerals.setTypeface(FontCache.instance(context).Numerals.face);
+		paintNumerals.setTextAlign(Align.CENTER);
 	}
 
 	public void shutdown() {
 		paintSmall = null;
 	}
 
-	public void refresh(List<String> widgetIds) {
-		meetingTime = Utils.readCalendar(context, 0);
+	long lastRefresh = 0;
+	
+	public void refresh(ArrayList<CharSequence> widgetIds) {
+		long time = System.currentTimeMillis();
+		if(time - lastRefresh > 5*60*1000) {
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() start");
+			meetingTime = Utils.readCalendar(context, 0);
+			lastRefresh = System.currentTimeMillis();
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() stop");		
+		}
 	}
 
-	public void get(List<String> widgetIds, Map<String,WidgetData> result) {
+	public void get(ArrayList<CharSequence> widgetIds, Map<String,WidgetData> result) {
 
 		if(widgetIds == null || widgetIds.contains(id_0)) {		
 			result.put(id_0, GenWidget(id_0));
@@ -68,31 +86,38 @@ public class CalendarWidget implements InternalWidget {
 			widget.description = desc_0;
 			widget.width = 24;
 			widget.height = 32;
-			
-			Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_calendar.bmp");
-	
-	
-			widget.bitmap = Utils.DrawIconStringWidget(context, widget.width, widget.height, icon, meetingTime, paintSmall);
 		}
 		else if (widget_id.equals(id_1)) {
 			widget.id = id_1;
 			widget.description = desc_1;
 			widget.width = 96;
 			widget.height = 32;
+		}
+							
+		Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_calendar.bmp");
+		
+		widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
+		Canvas canvas = new Canvas(widget.bitmap);
+		canvas.drawColor(Color.WHITE);
+		
+		canvas.drawBitmap(icon, 0, 3, null);
+		Calendar c = Calendar.getInstance(); 
+		int dayOfMonth = c.get(Calendar.DAY_OF_MONTH); 
+		if(dayOfMonth<10) {
+			canvas.drawText(""+dayOfMonth, 12, 16, paintNumerals);
+		}
+		else
+		{
+			canvas.drawText(""+dayOfMonth/10, 9, 16, paintNumerals);
+			canvas.drawText(""+dayOfMonth%10, 15, 16, paintNumerals);
+		}
+		canvas.drawText(meetingTime, 12, 29, paintSmall);
 			
-			Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_calendar.bmp");
-			
-			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
-			Canvas canvas = new Canvas(widget.bitmap);
-			canvas.drawColor(Color.WHITE);
-			
-			canvas.drawBitmap(icon, 0, 3, null);
-			canvas.drawText(meetingTime, 12, 29, paintSmall);
-			
+		if (widget_id.equals(id_1)) {
 			paintSmall.setTextAlign(Align.LEFT);
 			
 			String text = Utils.Meeting_Title;
-			if (Utils.Meeting_Location.length()>0)
+			if ((Utils.Meeting_Location !=null) && (Utils.Meeting_Location.length()>0))
 				text += " - " + Utils.Meeting_Location;
 			
 			canvas.save();			

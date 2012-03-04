@@ -1,6 +1,6 @@
 package org.metawatch.manager.widgets;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.metawatch.manager.FontCache;
@@ -31,8 +31,11 @@ public class WeatherWidget implements InternalWidget {
 	public final static String id_2 = "weather_fc_96_32";
 	final static String desc_2 = "Weather Forecast (96x32)";
 	
-	public final static String id_3 = "weather_x_11";
-	final static String desc_3 = "Temperatures today (...x11)";
+	public final static String id_3 = "moon_24_32";
+	final static String desc_3 = "Moon Phase (24x32)";
+	
+	public final static String id_4 = "weather_x_11";
+	final static String desc_4 = "Temperatures today (...x11)";
 	
 	private Context context;
 	private TextPaint paintSmall;
@@ -40,7 +43,7 @@ public class WeatherWidget implements InternalWidget {
 	private TextPaint paintLarge;
 	private TextPaint paintLargeOutline;
 	
-	public void init(Context context, List<String> widgetIds) {
+	public void init(Context context, ArrayList<CharSequence> widgetIds) {
 		this.context = context;
 
 		paintSmall = new TextPaint();
@@ -68,10 +71,10 @@ public class WeatherWidget implements InternalWidget {
 		paintSmall = null;
 	}
 
-	public void refresh(List<String> widgetIds) {
+	public void refresh(ArrayList<CharSequence> widgetIds) {
 	}
 
-	public void get(List<String> widgetIds, Map<String,WidgetData> result) {
+	public void get(ArrayList<CharSequence> widgetIds, Map<String,WidgetData> result) {
 		
 		if(widgetIds == null || widgetIds.contains(id_0)) {
 			InternalWidget.WidgetData widget = new InternalWidget.WidgetData();
@@ -120,9 +123,23 @@ public class WeatherWidget implements InternalWidget {
 			
 			widget.id = id_3;
 			widget.description = desc_3;
-			widget.height = 11;
+			widget.width = 24;
+			widget.height = 32;
 			
 			widget.bitmap = draw3();
+			widget.priority = 1;
+			widget.priority = WeatherData.moonPercentIlluminated !=-1 ? calcPriority() : -1;
+			
+			result.put(widget.id, widget);
+		}
+		
+		if(widgetIds == null || widgetIds.contains(id_4)) {
+			InternalWidget.WidgetData widget = new InternalWidget.WidgetData();
+			
+			widget.id = id_4;
+			widget.description = desc_4;
+			widget.height = 11;
+			widget.bitmap = draw4();
 			widget.width = widget.bitmap.getWidth();
 			widget.priority = calcPriority();
 			
@@ -275,9 +292,35 @@ public class WeatherWidget implements InternalWidget {
 		
 		return bitmap;
 	}
+	
+	final static int[] phaseImage = {0,0,1,1,1,1,1,2,2,2,3,3,3,3,4,4,4,5,5,5,5,6,6,6,7,7,7,7,0,0};
+	
+	private Bitmap draw3() {
+		Bitmap bitmap = Bitmap.createBitmap(24, 32, Bitmap.Config.RGB_565);
+		Canvas canvas = new Canvas(bitmap);
+		canvas.drawColor(Color.WHITE);
+		
+		paintSmall.setTextAlign(Paint.Align.CENTER);
+		
+		if (WeatherData.received && WeatherData.ageOfMoon!=-1) {
+			int moonPhase = WeatherData.ageOfMoon;
+			int moonImage = phaseImage[moonPhase];
+			int x = 0-(moonImage*24);
+			Bitmap image = Preferences.invertLCD ? Utils.loadBitmapFromAssets(context, "moon-inv.bmp") : Utils.loadBitmapFromAssets(context, "moon.bmp");
+			canvas.drawBitmap(image, x, 0, null);
+			
+			canvas.drawText(Integer.toString(WeatherData.moonPercentIlluminated)+"%", 12, 30, paintSmall);
+		} else {
+			canvas.drawText("Wait", 12, 16, paintSmall);
+		}
+		
+		paintSmall.setTextAlign(Paint.Align.LEFT);
+		
+		return bitmap;
+	}
 
 	static final String WAIT = "Wait";
-	private Bitmap draw3() {
+	private Bitmap draw4() {
 		int w;
 		final String high = WeatherData.received ? WeatherData.forecast[0].tempHigh : "?",
 				low = WeatherData.received ?  WeatherData.forecast[0].tempLow : "?";

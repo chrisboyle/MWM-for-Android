@@ -141,7 +141,7 @@ public class NotificationBuilder {
 	public static void createCalendar(Context context, String text) {
 		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsCalendarNumberBuzzes");				
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
-			Bitmap bitmap = smartLines(context, "calendar.bmp", "Calendar", new String[] {text + " which is being held at " + Utils.readCalendar(context, 0)+ " at this location: "+ Utils.Meeting_Location});	
+			Bitmap bitmap = smartLines(context, "calendar.bmp", "Calendar", new String[] {text});	
 			Notification.addBitmapNotification(context, bitmap, vibratePattern, Notification.getDefaultNotificationTimeout(context));	
 		} else {
 			byte[] scroll = new byte[800];
