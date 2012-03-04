@@ -106,4 +106,6 @@
     
     <string name="vibDisallowed">Vibration not allowed</string>
     <string name="vibAllowed">Vibration allowed</string>
+    
+    <string name="rmilk_api_signup_url">http://rmilk.com/services/api/keys.rtm</string>
 </resources>

@@ -34,6 +34,7 @@ package org.metawatch.manager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
@@ -92,7 +93,15 @@ public class Settings extends PreferenceActivity {
 				return false;
 			}
 		});
-		
+
+		preferenceScreen.findPreference("RTMAPISignup")
+				.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			public boolean onPreferenceClick(Preference arg0) {
+				startActivity(new Intent(Intent.ACTION_VIEW,
+						Uri.parse(getString(R.string.rmilk_api_signup_url))));
+				return false;
+			}
+		});
 
 		super.onStart();
 	}

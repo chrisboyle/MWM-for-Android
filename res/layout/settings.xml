@@ -339,6 +339,11 @@
 	
 	<PreferenceScreen
 		android:title="@string/settings_rmilk">
+		<Preference
+			android:title="Request API key..."
+			android:summary="@string/rmilk_api_signup_url"
+			android:key="RTMAPISignup"
+			/>
 		<EditTextPreference
 			android:title="API Key"
 			android:key="RTMKey"
