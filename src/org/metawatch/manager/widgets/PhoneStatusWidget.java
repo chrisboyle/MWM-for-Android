@@ -11,6 +11,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PixelXorXfermode;
 import android.graphics.Paint.Align;
 import android.text.TextPaint;
 
@@ -23,6 +25,7 @@ public class PhoneStatusWidget implements InternalWidget {
 	
 	private Context context;
 	private TextPaint paintSmall;
+	private Paint paintXor;
 		
 	public void init(Context context, ArrayList<CharSequence> widgetIds) {
 		this.context = context;
@@ -33,6 +36,8 @@ public class PhoneStatusWidget implements InternalWidget {
 		paintSmall.setTypeface(FontCache.instance(context).Small.face);
 		paintSmall.setTextAlign(Align.CENTER);
 
+		paintXor = new Paint();
+		paintXor.setXfermode(new PixelXorXfermode(Color.BLACK));
 	}
 
 	public void shutdown() {
@@ -90,6 +95,10 @@ public class PhoneStatusWidget implements InternalWidget {
 			canvas.drawBitmap(icon, 18, 0, null);
 			if(level>-1)
 				canvas.drawRect(19, 2 + ((100-level)/8), 23, 10, paintSmall);
+			if (Monitors.BatteryData.charging) {
+				Bitmap spark = Utils.loadBitmapFromAssets(context, "idle_phone_battery_charge_11.png");
+				canvas.drawBitmap(spark, 18, 0, paintXor);
+			}
 
 			int phoneBars = Monitors.SignalData.phoneBars;
 			if (phoneBars >= 1) canvas.drawLine(10, 8, 10, 11, paintSmall);
