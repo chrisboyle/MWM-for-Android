@@ -101,14 +101,14 @@ public class PhoneStatusWidget implements InternalWidget {
 			}
 
 			int phoneBars = Monitors.SignalData.phoneBars;
-			if (phoneBars >= 1) canvas.drawLine( 10,  8, 10, 11, paintSmall);
-			else                canvas.drawPoint(10, 11,         paintSmall);
-			if (phoneBars >= 2) canvas.drawLine( 12,  6, 12, 11, paintSmall);
-			else                canvas.drawPoint(12, 11,         paintSmall);
-			if (phoneBars >= 3) canvas.drawLine( 14,  4, 14, 11, paintSmall);
-			else                canvas.drawPoint(14, 11,         paintSmall);
-			if (phoneBars >= 4) canvas.drawLine( 16,  2, 16, 11, paintSmall);
-			else                canvas.drawPoint(16, 11,         paintSmall);
+			if (phoneBars >= 1) canvas.drawLine(10,  8, 10, 11, paintSmall);
+			else                canvas.drawLine(10, 10, 10, 11, paintSmall);
+			if (phoneBars >= 2) canvas.drawLine(12,  6, 12, 11, paintSmall);
+			else                canvas.drawLine(12, 10, 12, 11, paintSmall);
+			if (phoneBars >= 3) canvas.drawLine(14,  4, 14, 11, paintSmall);
+			else                canvas.drawLine(14, 10, 14, 11, paintSmall);
+			if (phoneBars >= 4) canvas.drawLine(16,  2, 16, 11, paintSmall);
+			else                canvas.drawLine(16, 10, 16, 11, paintSmall);
 			if (Monitors.SignalData.roaming) canvas.drawText("R", 12, 5, paintSmall);
 
 			if (Monitors.SignalData.wifiBars > 0) {
