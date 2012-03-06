@@ -863,7 +863,7 @@ public class Monitors {
 					}
 				} else if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 					WifiInfo info = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
-					if (info != null) SignalData.wifiBars = WifiManager.calculateSignalLevel(info.getRssi(), 5);
+					if (info != null) wifiBars = WifiManager.calculateSignalLevel(info.getRssi(), 5);
 				} else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
 					final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
 					wifiBars = WifiManager.calculateSignalLevel(newRssi, 5);
