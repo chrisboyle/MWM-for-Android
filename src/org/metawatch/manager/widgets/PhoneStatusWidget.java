@@ -11,7 +11,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Paint.Align;
 import android.text.TextPaint;
 
@@ -93,16 +92,10 @@ public class PhoneStatusWidget implements InternalWidget {
 				canvas.drawRect(19, 2 + ((100-level)/8), 23, 10, paintSmall);
 
 			int phoneBars = Monitors.SignalData.phoneBars;
-			DashPathEffect dashPath = new DashPathEffect(new float[]{1,1}, 0);
-			if (phoneBars < 1) paintSmall.setPathEffect(dashPath);
-			canvas.drawLine(10, 8, 10, 11, paintSmall);
-			if (phoneBars < 2) paintSmall.setPathEffect(dashPath);
-			canvas.drawLine(12, 6, 12, 11, paintSmall);
-			if (phoneBars < 3) paintSmall.setPathEffect(dashPath);
-			canvas.drawLine(14, 4, 14, 11, paintSmall);
-			if (phoneBars < 4) paintSmall.setPathEffect(dashPath);
-			canvas.drawLine(16, 2, 16, 11, paintSmall);
-			paintSmall.setPathEffect(null);
+			if (phoneBars >= 1) canvas.drawLine(10, 8, 10, 11, paintSmall);
+			if (phoneBars >= 2) canvas.drawLine(12, 6, 12, 11, paintSmall);
+			if (phoneBars >= 3) canvas.drawLine(14, 4, 14, 11, paintSmall);
+			if (phoneBars >= 4) canvas.drawLine(16, 2, 16, 11, paintSmall);
 			if (Monitors.SignalData.roaming) canvas.drawText("R", 12, 5, paintSmall);
 
 			if (Monitors.SignalData.wifiBars > 0) {
@@ -114,7 +107,7 @@ public class PhoneStatusWidget implements InternalWidget {
 				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, s), 0, 0, null);
 			} else if (! Monitors.SignalData.phoneDataType.isEmpty()) {
 				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "idle_phone_data.png"), 1, 0, null);
-				canvas.drawText(Monitors.SignalData.phoneDataType, 4, 11, paintSmall);
+				canvas.drawText(Monitors.SignalData.phoneDataType, 5, 11, paintSmall);
 			}
 		}
 		
