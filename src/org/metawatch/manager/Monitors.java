@@ -861,6 +861,9 @@ public class Monitors {
 					if (! intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
 						wifiBars = 0;
 					}
+				} else if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+					WifiInfo info = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
+					if (info != null) SignalData.wifiBars = WifiManager.calculateSignalLevel(info.getRssi(), 5);
 				} else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
 					final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
 					wifiBars = WifiManager.calculateSignalLevel(newRssi, 5);
@@ -874,7 +877,7 @@ public class Monitors {
 		IntentFilter f = new IntentFilter();
 		f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		f.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
-		//f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+		f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 		f.addAction(WifiManager.RSSI_CHANGED_ACTION);
 		context.registerReceiver(wifiReceiver, f);
 	}
