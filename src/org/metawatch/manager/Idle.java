@@ -177,7 +177,7 @@ public class Idle {
 					totalHeight += row.getHeight();
 				}
 							
-				int space = (((page==0 ? 64:96) - totalHeight) / (rowsToDraw.size()+1));
+				int space = Math.max(1, (((page==0 ? 64:96) - totalHeight) / (rowsToDraw.size()+1)));
 				int yPos = (page==0 ? 32:0) + space;
 				
 				for(WidgetRow row : rowsToDraw) {
