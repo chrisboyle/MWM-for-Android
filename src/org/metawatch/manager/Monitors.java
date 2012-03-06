@@ -81,6 +81,8 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -112,7 +114,7 @@ public class Monitors {
 	
 	private static NetworkLocationListener networkLocationListener;
 	
-	private static BroadcastReceiver batteryLevelReceiver;
+	private static BroadcastReceiver batteryLevelReceiver, wifiReceiver;
 	
 	public static class WeatherData {
 		public static boolean updating = false;
@@ -155,6 +157,14 @@ public class Monitors {
 	
 	public static class BatteryData {
 		public static int level = -1;
+		public static boolean charging = false;
+	}
+	
+	public static class SignalData {
+		public static int phoneBars = 0;  // 0-4
+		public static int wifiBars  = 0;  // 0-4
+		public static String phoneDataType = "";
+		public static boolean roaming = false;
 	}
 	
 	private static Monitors m = new Monitors(); // Static instance for new
@@ -194,6 +204,7 @@ public class Monitors {
 				"Monitors.start()");
 		
 		createBatteryLevelReciever(context);
+		createWifiReceiver(context);
 				
 		if (Preferences.weatherGeolocation) {
 			if (Preferences.logging) Log.d(MetaWatch.TAG,
@@ -215,7 +226,9 @@ public class Monitors {
 		CallStateListener phoneListener = new CallStateListener(context);
 		
 		telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		int phoneEvents = PhoneStateListener.LISTEN_CALL_STATE;
+		int phoneEvents = PhoneStateListener.LISTEN_CALL_STATE
+				| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
+				| PhoneStateListener.LISTEN_DATA_CONNECTION_STATE;
 		telephonyManager.listen(phoneListener, phoneEvents);
 		
 		if (Utils.isGmailAccessSupported(context)) {
@@ -277,6 +290,10 @@ public class Monitors {
 		if (batteryLevelReceiver!=null) {
 			context.unregisterReceiver(batteryLevelReceiver);
 			batteryLevelReceiver=null;
+		}
+		if (wifiReceiver!=null) {
+			context.unregisterReceiver(wifiReceiver);
+			wifiReceiver=null;
 		}
 	}
 	
@@ -813,9 +830,11 @@ public class Monitors {
 				if (rawlevel >= 0 && scale > 0) {
 					level = (rawlevel * 100) / scale;
 				}
-				if(BatteryData.level != level) {
+				boolean charging = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) > 0;
+				if(BatteryData.level != level || BatteryData.charging != charging) {
 					//if (Preferences.logging) Log.d(MetaWatch.TAG, "Battery level changed: "+rawlevel+"/"+scale+" - "+level+"%");
 					BatteryData.level = level;
+					BatteryData.charging = charging;
 					Idle.updateLcdIdle(context);
 				}
 			}
@@ -823,5 +842,40 @@ public class Monitors {
 		context.registerReceiver(batteryLevelReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 	}
 
-	
+	private static void createWifiReceiver(final Context context)
+	{
+		if (wifiReceiver != null) return;
+		WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		WifiInfo info = wm.getConnectionInfo();
+		if (info != null) SignalData.wifiBars = WifiManager.calculateSignalLevel(info.getRssi(), 5);
+		wifiReceiver = new BroadcastReceiver() {
+			int wifiBars = 0;
+			@Override public void onReceive(Context c, Intent intent) {
+				String action = intent.getAction();
+				if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+					if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
+							WifiManager.WIFI_STATE_UNKNOWN) != WifiManager.WIFI_STATE_ENABLED) {
+						wifiBars = 0;
+					}
+				} else if (action.equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
+					if (! intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
+						wifiBars = 0;
+					}
+				} else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
+					final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
+					wifiBars = WifiManager.calculateSignalLevel(newRssi, 5);
+				}
+				if (wifiBars != SignalData.wifiBars) {
+					SignalData.wifiBars = wifiBars;
+					Idle.updateLcdIdle(context);
+				}
+			}
+		};
+		IntentFilter f = new IntentFilter();
+		f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+		f.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+		//f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+		f.addAction(WifiManager.RSSI_CHANGED_ACTION);
+		context.registerReceiver(wifiReceiver, f);
+	}
 }

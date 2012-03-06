@@ -381,9 +381,9 @@ public class MetaWatchService extends Service {
 
 		audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		
-		Idle.updateLcdIdle(context);
-		
 		Monitors.start(this, telephonyManager);
+
+		Idle.updateLcdIdle(context);
 
 		start();
 

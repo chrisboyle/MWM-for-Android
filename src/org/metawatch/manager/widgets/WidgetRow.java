@@ -84,6 +84,8 @@ public class WidgetRow {
 		int space = justify ? (96-totalWidth)/(widgets.size()+1) : 1;
 		int x=space;
 		for(WidgetData widget : widgets) {
+			if (widget.id.equals(PhoneStatusWidget.id_1))
+				x = Math.max(x, 95 - widget.width);
 			canvas.drawBitmap(widget.bitmap, x,
 					y + totalHeight/2 - widget.height/2, null);
 			x += (space+widget.width);
