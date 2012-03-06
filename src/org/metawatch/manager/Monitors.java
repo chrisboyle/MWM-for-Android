@@ -80,6 +80,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -847,7 +848,7 @@ public class Monitors {
 		if (wifiReceiver != null) return;
 		WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		WifiInfo info = wm.getConnectionInfo();
-		if (info != null) SignalData.wifiBars = WifiManager.calculateSignalLevel(info.getRssi(), 5);
+		if (info != null) SignalData.wifiBars = 1 + WifiManager.calculateSignalLevel(info.getRssi(), 4);
 		wifiReceiver = new BroadcastReceiver() {
 			int wifiBars = 0;
 			@Override public void onReceive(Context c, Intent intent) {
@@ -862,11 +863,20 @@ public class Monitors {
 						wifiBars = 0;
 					}
 				} else if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-					WifiInfo info = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
-					if (info != null) wifiBars = WifiManager.calculateSignalLevel(info.getRssi(), 5);
+					NetworkInfo netInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+					if (netInfo.getState() != NetworkInfo.State.CONNECTED) {
+						wifiBars = 0;
+					} else {
+						WifiInfo wifiInfo = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
+						if (wifiInfo == null) {
+							wifiBars = 0;
+						} else {
+							wifiBars = 1 + WifiManager.calculateSignalLevel(wifiInfo.getRssi(), 4);
+						}
+					}
 				} else if (action.equals(WifiManager.RSSI_CHANGED_ACTION)) {
 					final int newRssi = intent.getIntExtra(WifiManager.EXTRA_NEW_RSSI, -200);
-					wifiBars = WifiManager.calculateSignalLevel(newRssi, 5);
+					wifiBars = 1 + WifiManager.calculateSignalLevel(newRssi, 4);
 				}
 				if (wifiBars != SignalData.wifiBars) {
 					SignalData.wifiBars = wifiBars;
