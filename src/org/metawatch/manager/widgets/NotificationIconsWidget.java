@@ -55,7 +55,7 @@ public class NotificationIconsWidget implements InternalWidget
 			int x=0, y=0;
 
 			for (LCDNotification n : LCDNotification.iconNotifications) {
-				// They're already scaled to (mostly) 13 pixels high; width varies
+				// They're already scaled to (mostly) 11 pixels high; width varies
 				int w = n.icon.getWidth();
 				int h = n.icon.getHeight();
 				int iy = y + 5 - h/2;
