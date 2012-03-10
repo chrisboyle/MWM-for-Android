@@ -115,7 +115,7 @@ public class Idle {
 		// Bucket rows into screens
 		ArrayList<ArrayList<WidgetRow>> screens = new ArrayList<ArrayList<WidgetRow>>();
 	
-		int screenSize = 32; // Initial screen has top part used by the fw clock
+		int screenSize = 30; // Initial screen has top part used by the fw clock
 		ArrayList<WidgetRow> screen = new ArrayList<WidgetRow>();
 		for(WidgetRow row : rows) { 
 			if(screenSize+row.getHeight() > 96) {
@@ -177,8 +177,8 @@ public class Idle {
 					totalHeight += row.getHeight();
 				}
 							
-				int space = Math.max(1, (((page==0 ? 64:96) - totalHeight) / (rowsToDraw.size()+1)));
-				int yPos = (page==0 ? 32:0) + space;
+				int space = (((page==0 ? 64:96) - totalHeight) / (rowsToDraw.size()+1));
+				int yPos = (page==0 ? 30:0) + space;
 				
 				for(WidgetRow row : rowsToDraw) {
 					row.draw(widgetData, canvas, yPos);

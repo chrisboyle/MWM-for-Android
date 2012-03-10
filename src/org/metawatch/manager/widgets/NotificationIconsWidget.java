@@ -13,8 +13,8 @@ import android.graphics.Rect;
 
 public class NotificationIconsWidget implements InternalWidget
 {
-	public final static String id_0 = "notification_icons_x_11";
-	final static String desc_0 = "Notification icons (...x11)";
+	public final static String id_0 = "notification_icons_x_13";
+	final static String desc_0 = "Notification icons (...x13)";
 	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	private Context context;
@@ -38,7 +38,7 @@ public class NotificationIconsWidget implements InternalWidget
 		widget.description = desc_0;
 		widget.priority = 1;
 		widget.width = 1;
-		widget.height = 1;
+		widget.height = 13;
 		synchronized (LCDNotification.iconNotifications) {
 			if(LCDNotification.iconNotifications.size() == 0) {
 				widget.bitmap = null;
@@ -47,12 +47,11 @@ public class NotificationIconsWidget implements InternalWidget
 			}
 			for (LCDNotification n : LCDNotification.iconNotifications) {
 				widget.width += n.icon.getWidth() + 1;
-				widget.height = Math.max(widget.height, n.icon.getHeight());
 			}
 			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
 			Canvas canvas = new Canvas(widget.bitmap);
 			canvas.drawColor(Color.WHITE);
-			int x=0, y=0;
+			int x=0, y=1;
 
 			for (LCDNotification n : LCDNotification.iconNotifications) {
 				// They're already scaled to (mostly) 11 pixels high; width varies

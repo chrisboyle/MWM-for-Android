@@ -20,8 +20,8 @@ public class PhoneStatusWidget implements InternalWidget {
 
 	public final static String id_0 = "phoneStatus_24_32";
 	final static String desc_0 = "Phone Battery Status (24x32)";
-	public final static String id_1 = "phoneStatus_24_11";
-	final static String desc_1 = "Phone Status (24x11)";
+	public final static String id_1 = "phoneStatus_mini";
+	final static String desc_1 = "Phone Status (24x13)";
 	
 	private Context context;
 	private TextPaint paintSmall;
@@ -84,44 +84,47 @@ public class PhoneStatusWidget implements InternalWidget {
 				canvas.drawRect(13, 8 + ((100-level)/10), 19, 18, paintSmall);
 		} else {
 			widget.description = desc_1;
-			widget.width = 24;
-			widget.height = 11;
+			widget.width = 23;
+			widget.height = 13;
 
 			Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_phone_battery_11.png");
 			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
 			Canvas canvas = new Canvas(widget.bitmap);
 			canvas.drawColor(Color.WHITE);
 
-			canvas.drawBitmap(icon, 18, 0, null);
+			canvas.drawBitmap(icon, 17, 1, null);
 			if(level>-1)
-				canvas.drawRect(19, 2 + ((100-level)/8), 23, 10, paintSmall);
+				canvas.drawRect(18, 3 + ((100-level)/8), 22, 11, paintSmall);
 			if (Monitors.BatteryData.charging) {
 				Bitmap spark = Utils.loadBitmapFromAssets(context, "idle_phone_battery_charge_11.png");
-				canvas.drawBitmap(spark, 18, 0, paintXor);
+				canvas.drawBitmap(spark, 17, 1, paintXor);
 			}
 
 			int phoneBars = Monitors.SignalData.phoneBars;
-			if (phoneBars >= 1) canvas.drawLine(10,  8, 10, 11, paintSmall);
-			else                canvas.drawLine(10, 10, 10, 11, paintSmall);
-			if (phoneBars >= 2) canvas.drawLine(12,  6, 12, 11, paintSmall);
-			else                canvas.drawLine(12, 10, 12, 11, paintSmall);
-			if (phoneBars >= 3) canvas.drawLine(14,  4, 14, 11, paintSmall);
-			else                canvas.drawLine(14, 10, 14, 11, paintSmall);
-			if (phoneBars >= 4) canvas.drawLine(16,  2, 16, 11, paintSmall);
-			else                canvas.drawLine(16, 10, 16, 11, paintSmall);
-			if (Monitors.SignalData.roaming) canvas.drawText("R", 12, 5, paintSmall);
+			if (phoneBars >= 1) canvas.drawLine( 9, 10,  9, 12, paintSmall);
+			else                canvas.drawLine( 9, 11,  9, 12, paintSmall);
+			if (phoneBars >= 2) canvas.drawLine(11,  8, 11, 12, paintSmall);
+			else                canvas.drawLine(11, 11, 11, 12, paintSmall);
+			if (phoneBars >= 3) canvas.drawLine(13,  6, 13, 12, paintSmall);
+			else                canvas.drawLine(13, 11, 13, 12, paintSmall);
+			if (phoneBars >= 4) canvas.drawLine(15,  4, 15, 12, paintSmall);
+			else                canvas.drawLine(15, 11, 15, 12, paintSmall);
 
+			paintSmall.setTextAlign(Align.RIGHT);
 			if (Monitors.SignalData.wifiBars > 0) {
 				String s;
 				if (Monitors.SignalData.wifiBars >= 4) s = "idle_phone_wifi_4.png";
 				else if (Monitors.SignalData.wifiBars >= 3) s = "idle_phone_wifi_3.png";
 				else if (Monitors.SignalData.wifiBars >= 2) s = "idle_phone_wifi_2.png";
 				else s = "idle_phone_wifi_1.png";
-				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, s), 0, 0, null);
+				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, s), 1, 1, null);
+				// overlap, but still clear
+				if (Monitors.SignalData.roaming) canvas.drawText("R", 14, 6, paintSmall);
 			} else if (! Monitors.SignalData.phoneDataType.isEmpty()) {
-				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "idle_phone_data.png"), 1, 0, null);
-				canvas.drawText(Monitors.SignalData.phoneDataType, 5, 11, paintSmall);
+				canvas.drawText(Monitors.SignalData.phoneDataType, 14, 6, paintSmall);
+				if (Monitors.SignalData.roaming) canvas.drawText("R", 9, 12, paintSmall);
 			}
+			paintSmall.setTextAlign(Align.LEFT);
 		}
 		
 		return widget;

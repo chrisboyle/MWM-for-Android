@@ -34,8 +34,8 @@ public class WeatherWidget implements InternalWidget {
 	public final static String id_3 = "moon_24_32";
 	final static String desc_3 = "Moon Phase (24x32)";
 	
-	public final static String id_4 = "weather_x_11";
-	final static String desc_4 = "Temperatures today (...x11)";
+	public final static String id_4 = "weather_x_13";
+	final static String desc_4 = "Temperatures today (...x13)";
 	
 	private Context context;
 	private TextPaint paintSmall;
@@ -138,7 +138,7 @@ public class WeatherWidget implements InternalWidget {
 			
 			widget.id = id_4;
 			widget.description = desc_4;
-			widget.height = 11;
+			widget.height = 13;
 			widget.bitmap = draw4();
 			widget.width = widget.bitmap.getWidth();
 			widget.priority = calcPriority();
@@ -331,18 +331,18 @@ public class WeatherWidget implements InternalWidget {
 		} else {
 			w = (int) Math.ceil(2 + paintSmall.measureText(WAIT));
 		}
-		Bitmap bitmap = Bitmap.createBitmap(w, 11, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(w, 13, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(bitmap);
 		canvas.drawColor(Color.WHITE);
 
 		if (WeatherData.received) {
-			canvas.drawText(WeatherData.temp, 1, 11, paintLarge);
+			canvas.drawText(WeatherData.temp, 1, 12, paintLarge);
 			paintSmall.setTextAlign(Align.RIGHT);
-			canvas.drawText(high, w, 5, paintSmall);
-			canvas.drawText(low,  w, 11, paintSmall);
+			canvas.drawText(high, w, 6, paintSmall);
+			canvas.drawText(low,  w, 12, paintSmall);
 			paintSmall.setTextAlign(Align.LEFT);
 		} else {
-			canvas.drawText(WAIT, 0, 8, paintSmall);
+			canvas.drawText(WAIT, 0, 9, paintSmall);
 		}
 
 		return bitmap;
