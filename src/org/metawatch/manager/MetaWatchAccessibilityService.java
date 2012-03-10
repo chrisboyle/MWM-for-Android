@@ -20,7 +20,7 @@ import android.view.accessibility.AccessibilityEvent;
 public class MetaWatchAccessibilityService extends AccessibilityService {
 
 	// in patched Android, probably not in your SDK
-	static final int TYPE_NOTIFICATION_REMOVED = 128;
+	static final int TYPE_NOTIFICATION_REMOVED = 0x4000;
 
 	@Override
 	protected void onServiceConnected() {
@@ -67,8 +67,11 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				
 		Parcelable p = event.getParcelableData();
 		if (p instanceof android.app.Notification == false) {
-			if (Preferences.logging) Log.d(MetaWatch.TAG,
-					"MetaWatchAccessibilityService.onAccessibilityEvent(): Not a real notification, ignoring.");
+			if (Preferences.logging && event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+				Log.d(MetaWatch.TAG,
+					"MetaWatchAccessibilityService.onAccessibilityEvent(): Not a real notification, ignoring."
+					+ "type: "+event.getEventType()+" recvd: "+p);
+			}
 			return;
 		}
 
