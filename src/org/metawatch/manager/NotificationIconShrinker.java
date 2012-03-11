@@ -47,6 +47,12 @@ public class NotificationIconShrinker
 			d = r.getDrawable(iconId);
 		} catch (Exception e) {}
 		if (d == null) return null;
+		return shrink(d, packageName, maxSize);
+	}
+
+	public static Bitmap shrink(Drawable d, String packageName, int maxSize)
+	{
+		if (d == null) return null;
 
 		// Coerce to Bitmap - might already be a BitmapDrawable, but make
 		// sure it's mutable and doesn't have unhelpful density info attached

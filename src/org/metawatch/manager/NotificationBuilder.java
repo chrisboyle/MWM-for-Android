@@ -187,10 +187,15 @@ public class NotificationBuilder {
 		}
 	}
 	
-	public static void createOtherNotification(Context context, String appName, String notificationText) {
+	public static void createOtherNotification(Context context, String appName, String notificationText, Bitmap icon) {
 		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsOtherNotificationNumberBuzzes");				
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
-			Notification.addTextNotification(context, appName + ": " + notificationText, vibratePattern, Notification.getDefaultNotificationTimeout(context));
+			if (MetaWatchService.Preferences.stickyNotifications) {
+				Bitmap[] bitmaps = smartNotify(context, icon, appName, notificationText);
+				Notification.addBitmapNotification(context, bitmaps, vibratePattern, -1);
+			} else {
+				Notification.addTextNotification(context, appName + ": " + notificationText, vibratePattern, Notification.getDefaultNotificationTimeout(context));
+			}
 		} else {
 			byte[] scroll = new byte[800];
 			int len = Protocol.createOled2linesLong(context, notificationText, scroll);
@@ -322,8 +327,8 @@ public class NotificationBuilder {
 			
 			// Draw header
 			canvas.drawRect(new android.graphics.Rect(0,0,96,ih), whitePaint);
-			canvas.drawBitmap(icon, 0, Math.max(9 - icon.getHeight()/2, 0), paint);
-			canvas.drawText(header, icon.getWidth()+1, ih-2, paintHead);
+			canvas.drawBitmap(icon, 1, Math.max(9 - icon.getHeight()/2, 0), paint);
+			canvas.drawText(header, icon.getWidth()+2, ih-2, paintHead);
 			
 			//canvas.drawText(""+(h-y)+" "+displayHeight, icon.getWidth()+1, icon.getHeight()-2, paintHead);
 			

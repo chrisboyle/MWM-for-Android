@@ -12,6 +12,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -169,9 +170,22 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 					List<CharSequence> l = event.getText();
 					if (firstNotTicker < l.size()) haveCMHack = true;
 					if (firstNotTicker + 1 < l.size()) {
-						NotificationBuilder.createSmart(this,
-								l.get(firstNotTicker+1).toString(),
-								l.get(firstNotTicker).toString(), icon, null);
+						if (progressLike.matcher(l.get(firstNotTicker+1)).matches()) {
+							// ICS
+							String title = "GMail";
+							String subject = l.get(firstNotTicker).toString();
+							int colonPos = subject.indexOf(':');
+							if (colonPos > 0) {
+								title = subject.substring(0, colonPos);
+								subject = subject.substring(colonPos + 2);
+							}
+							NotificationBuilder.createSmart(this, title,
+									subject, icon, null);
+						} else {
+							NotificationBuilder.createSmart(this,
+									l.get(firstNotTicker+1).toString(),
+									l.get(firstNotTicker).toString(), icon, null);
+						}
 					}
 				}
 				LCDNotification.addPersistentNotification(this, false,
@@ -254,6 +268,11 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 				try {
 					packageInfo = pm.getPackageInfo(packageName.toString(), 0);
 					appName = packageInfo.applicationInfo.loadLabel(pm).toString();
+					if (icon == null) {
+						Drawable d = packageInfo.applicationInfo.loadIcon(pm);
+						icon = NotificationIconShrinker.shrink(d, packageName.toString(),
+								NotificationIconShrinker.ICON_SIZE);
+					}
 	
 				} catch (NameNotFoundException e) {
 					/* OK, appName is null */
@@ -264,14 +283,14 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 							"onAccessibilityEvent(): Unknown app -- sending notification: '"
 									+ notification.tickerText + "'.");
 					NotificationBuilder.createOtherNotification(this,
-							"Notification", notification.tickerText.toString());
+							"Notification", notification.tickerText.toString(), icon);
 				} else {
 					if (Preferences.logging) Log.d(MetaWatch.TAG,
 							"onAccessibilityEvent(): Sending notification: app='"
 									+ appName + "' notification='"
 									+ notification.tickerText + "'.");
 					NotificationBuilder.createOtherNotification(this, appName,
-							notification.tickerText.toString());
+							notification.tickerText.toString(), icon);
 				}
 			}
 		}
