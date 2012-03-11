@@ -31,7 +31,7 @@
 
     <PreferenceCategory android:title="Time">
     	<Preference android:key="set_rtc" android:title="Set RTC (LCD/OLED)"/>
-    	<Preference android:key="time_24hr" android:title="Set to 24hr mode (LCD)"/>
+    	<Preference android:key="time_24hr" android:title="Set time / date formats (LCD)" android:summary="Set the watch's date and time formats to watch your phone.  Note that this may cause the watch to crash on pre 0.9 versions of the firmware."/>
     </PreferenceCategory>
     
     <PreferenceCategory android:title="Media Control">

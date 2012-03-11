@@ -196,26 +196,65 @@ public class WeatherWidget implements InternalWidget {
 		
 		if (WeatherData.received) {
 			
+			/* For debugging the display of weather information
+			WeatherData.icon = "weather_sunny.bmp";
+			WeatherData.icon = "weather_partlycloudy.bmp";
+			WeatherData.icon = "weather_rain.bmp";
+			WeatherData.icon = "weather_thunderstorm.bmp";
+			WeatherData.icon = "weather_snow.bmp";
+			WeatherData.icon = "weather_cloudy.bmp";		  
+			WeatherData.condition = "clear";
+			WeatherData.condition = "sunny";
+			WeatherData.condition = "cloudy";
+			WeatherData.condition = "overcast";
+			WeatherData.condition = "mostly cloudy";
+			WeatherData.condition = "partly cloudy";
+			WeatherData.condition = "mostly sunny";
+			WeatherData.condition = "partly sunny";
+			WeatherData.condition = "rain";
+			WeatherData.condition = "light rain";
+			WeatherData.condition = "rain showers";
+			WeatherData.condition = "showers";
+			WeatherData.condition = "chance of showers";
+			WeatherData.condition = "scattered showers";
+			WeatherData.condition = "freezing rain";
+			WeatherData.condition = "freezing drizzle";
+			WeatherData.condition = "rain and snow";
+			WeatherData.condition = "thunderstorm";
+			WeatherData.condition = "chance of storm";
+			WeatherData.condition = "isolated thunderstorms";
+			WeatherData.condition = "chance of snow";
+			WeatherData.condition = "snow showers";
+			WeatherData.condition = "ice/snow";
+			WeatherData.condition = "flurries";		  
+			WeatherData.temp = "-1.4";*/
+
 			// icon
 			Bitmap image = Utils.loadBitmapFromAssets(context, WeatherData.icon);
-			canvas.drawBitmap(image, 36, 5, null);
+			if (Preferences.overlayWeatherText)
+				canvas.drawBitmap(image, 36, 5, null);
+			else
+				canvas.drawBitmap(image, 34, 1, null);
 			
 			// condition
-			Utils.drawWrappedOutlinedText(WeatherData.condition, canvas, 1, 1, 60, paintSmall, paintSmallOutline, Layout.Alignment.ALIGN_NORMAL);
-								
+			if (Preferences.overlayWeatherText)
+				Utils.drawWrappedOutlinedText(WeatherData.condition, canvas, 1, 2, 60, paintSmall, paintSmallOutline, Layout.Alignment.ALIGN_NORMAL);
+			else
+				Utils.drawWrappedOutlinedText(WeatherData.condition, canvas, 1, 2, 34, paintSmall, paintSmallOutline, Layout.Alignment.ALIGN_NORMAL);
+
 			// temperatures
 			paintLarge.setTextAlign(Paint.Align.RIGHT);
 			paintLargeOutline.setTextAlign(Paint.Align.RIGHT);
-			Utils.drawOutlinedText(WeatherData.temp, canvas, 82, 12, paintLarge, paintLargeOutline);
+			Utils.drawOutlinedText(WeatherData.temp, canvas, 82, 13, paintLarge, paintLargeOutline);
 			if (WeatherData.celsius) {
 				//RM: since the degree symbol draws wrong...
-				canvas.drawText("O", 82, 6, paintSmall);
-				canvas.drawText("C", 95, 12, paintLarge);
+				canvas.drawText("O", 82, 7, paintSmall);
+				canvas.drawText("C", 95, 13, paintLarge);
 			}
 			else {
 				//RM: since the degree symbol draws wrong...
-				canvas.drawText("O", 83, 6, paintSmall);
-				canvas.drawText("F", 95, 12, paintLarge);
+				canvas.drawText("O", 83, 7, paintSmall);
+				canvas.drawText("F", 95, 13, paintLarge);
 			}
 			paintLarge.setTextAlign(Paint.Align.LEFT);
 						

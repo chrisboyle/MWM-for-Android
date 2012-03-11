@@ -35,6 +35,7 @@ public class WidgetManager {
 			widgets.add(new NotificationIconsWidget());
 			widgets.add(new NotificationOngoingWidget());
 			widgets.add(new PhoneStatusWidget());
+			widgets.add(new PictureWidget());
 			//widgets.add(new TestWidget());
 		}
 		
@@ -52,11 +53,19 @@ public class WidgetManager {
 			widget.get(widgetsDesired, dataCache);
 		}
 		
+		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+		
+		
 		Intent intent = new Intent("org.metawatch.manager.REFRESH_WIDGET_REQUEST");
 		if(widgetsDesired==null)
 			intent.putExtra("get_previews", true);
 		else
-			intent.putCharSequenceArrayListExtra("widgets_desired", widgetsDesired);
+			if (currentapiVersion >= android.os.Build.VERSION_CODES.FROYO) {
+				intent.putCharSequenceArrayListExtra("widgets_desired", widgetsDesired);
+			}
+			else {
+				// TODO: Make Eclair compatible!
+			}
 		
 		return dataCache;
 	}

@@ -342,8 +342,8 @@ public class Test extends PreferenceActivity {
 		
 		preferenceScreen.findPreference("time_24hr").setOnPreferenceClickListener(new OnPreferenceClickListener() {	
 			public boolean onPreferenceClick(Preference arg0) {
-				Protocol.setNvalTime(true);
-			   	//NotificationBuilder.createOtherNotification(context, "", "You'll need to reset your watch for this to take effect.");
+				Protocol.setTimeDateFormat(context);
+			   	NotificationBuilder.createOtherNotification(context, "Time and date", "Formats updated.", null);
 		    	return true;
 			}
 		});

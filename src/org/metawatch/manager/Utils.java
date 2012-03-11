@@ -32,16 +32,30 @@
 
 package org.metawatch.manager;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.metawatch.manager.MetaWatchService.Preferences;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -51,6 +65,8 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -62,6 +78,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
@@ -74,12 +91,13 @@ import android.text.format.DateUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class Utils {
 
 	static public String Meeting_Title = "---";
 	static public String Meeting_Location = "---";
-	
+	static public long Meeting_EndTimestamp;
 	
 	public static String getContactNameFromNumber(Context context, String number) {
 		
@@ -97,12 +115,8 @@ public class Utils {
 			
 			if (c.moveToFirst()) {
 				String name = c.getString(c.getColumnIndex(PhoneLookup.DISPLAY_NAME));
-				c.close();
-				
 				if (name.length() > 0)
 					return name;
-				else
-					return number;
 			}
 			
 			c.close();
@@ -256,11 +270,15 @@ public class Utils {
 					}
 
 					c.close();
-					begintemp = eventCursor.getLong(1);	
+					begintemp = eventCursor.getLong(1);
 					MeetingTime = new SimpleDateFormat("HH:mm").format(begintemp);
+					Meeting_EndTimestamp = eventCursor.getLong(2);
 
-
-					elapsedtimetemp = (begintemp-CurrentTime);
+					if (Preferences.readCalendarDuringMeeting) {
+					  elapsedtimetemp = (begintemp-CurrentTime);
+					} else {
+					  elapsedtimetemp = (Meeting_EndTimestamp-(Preferences.readCalendarMinDurationToMeetingEnd+1)*60*1000-CurrentTime);
+					}
 
 					//if (Preferences.logging) Log.d(MetaWatch.TAG,"CalendarService.GetData(): Next Meeting time : "+ MeetingTime);
 					//if (Preferences.logging) Log.d(MetaWatch.TAG,"CalendarService.GetData(): Next Meeting Title : " + titletemp);
@@ -309,7 +327,7 @@ public class Utils {
 				Meeting_Location = "---";
 			}
 
-
+			
 
 			if (Return==1){
 				return String.valueOf(currentremaintime);
@@ -674,5 +692,136 @@ public class Utils {
     	Spannable spannableText = (Spannable) tv.getText();
     	spannableText.setSpan(new ForegroundColorSpan(color), start, end, 0);
     }
+    
+    public static ArrayList<String> grabLogCat(String filter) {
+    	try {
+            Process process = Runtime.getRuntime().exec("logcat -d -s "+filter);
+            BufferedReader bufferedReader = new BufferedReader(
+            new InputStreamReader(process.getInputStream()));
+
+            ArrayList<String> log = new ArrayList<String>();
+            String line = "";
+            while ((line = bufferedReader.readLine()) != null) {
+              log.add(line);
+            }
+            return log;
+          } catch (IOException e) {
+        	  return null;
+          }
+    }
+    
+	public static void backupUserPrefs(Context context) {
+		final File prefsFile = new File(context.getFilesDir(), "../shared_prefs/"+context.getPackageName()+"_preferences.xml");
+		final File backupFile = new File(context.getExternalFilesDir(null), "preferenceBackup.xml");
+		String error = "";
+		Toast toast;
+		try {
+			FileChannel src = new FileInputStream(prefsFile).getChannel();
+			FileChannel dst = new FileOutputStream(backupFile).getChannel();
+			
+	        dst.transferFrom(src, 0, src.size());
+	        src.close();
+	        dst.close();
+	        
+	        toast = Toast.makeText(context, "Backed up user prefs to "+backupFile.getAbsolutePath(), Toast.LENGTH_SHORT);
+	        toast.show();
+	        return;
+		} catch (FileNotFoundException e) {
+			error = e.getMessage();
+			e.printStackTrace();
+		} catch (IOException e) {
+			error = e.getMessage();
+			e.printStackTrace();
+		}
+		
+		 toast = Toast.makeText(context, "Failed to Back up user prefs to "+backupFile.getAbsolutePath()+ " - "+error, Toast.LENGTH_SHORT);
+		 toast.show();
+		
+	}
+    
+	public static boolean restoreUserPrefs(Context context) {
+		final File backupFile = new File(context.getExternalFilesDir(null), "preferenceBackup.xml");
+		String error = "";
+		
+	    try {
+	    	
+			SharedPreferences sharedPreferences = PreferenceManager
+					.getDefaultSharedPreferences(context);
+			
+			Editor editor = sharedPreferences.edit();
+	    	
+	    	InputStream inputStream = new FileInputStream(backupFile);
+	
+	    	DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+	    	DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+	
+	        Document doc = docBuilder.parse(inputStream);        
+	        Element root = doc.getDocumentElement();
+	        
+	        Node child = root.getFirstChild();
+	        while(child!=null) {	
+	        	if(child.getNodeType() == Node.ELEMENT_NODE) {
+	        	
+	        		Element element = (Element)child;
+	        		
+		        	String type = element.getNodeName();
+		        	String name = element.getAttribute("name");
+		        	
+		        	
+		        	if(type.equals("string")) {
+		        		String value = element.getTextContent();
+		        		editor.putString(name, value);
+		        	}
+		        	else if(type.equals("boolean")) {
+		        		String value = element.getAttribute("value");
+		        		editor.putBoolean(name, value.equals("true"));
+		        	}
+	        	}
+		        	
+		        child = child.getNextSibling();
+	        	
+	        }
+	        
+	        editor.commit();
+	        Toast toast = Toast.makeText(context, "Restored user prefs from "+backupFile.getAbsolutePath(), Toast.LENGTH_SHORT);
+	        toast.show();
+	        
+	        return true;
+	    
+		} catch (FileNotFoundException e) {
+			error = e.getMessage();
+			e.printStackTrace();
+		} catch (ParserConfigurationException e) {
+			error = e.getMessage();
+			e.printStackTrace();
+		} catch (SAXException e) {
+			error = e.getMessage();
+			e.printStackTrace();
+		} catch (IOException e) {
+			error = e.getMessage();
+			e.printStackTrace();
+		}
+		
+		Toast toast = Toast.makeText(context, "Failed to restore user prefs from "+backupFile.getAbsolutePath()+ " - "+error, Toast.LENGTH_SHORT);
+		toast.show();
+		
+		return false;
+	}
+	
+	public static String removeExtension(String filePath) {
+	    File f = new File(filePath);
+	    // if it's a directory, don't remove the extention
+	    if (f.isDirectory()) return f.getName();
+	    String name = f.getName();
+	    // if it is a hidden file
+	    if (name.startsWith(".")) {
+	        // if there is no extn, do not rmove one...
+	        if (name.lastIndexOf('.') == name.indexOf('.')) return name;
+	    }
+	    // if there is no extention, don't do anything
+	    if (!name.contains(".")) return name;
+	    // Otherwise, remove the last 'extension type thing'
+	    return name.substring(0, name.lastIndexOf('.'));
+	}
 
 }

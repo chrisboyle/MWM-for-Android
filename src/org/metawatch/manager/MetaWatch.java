@@ -72,7 +72,6 @@ import android.view.Window;
 import android.webkit.WebView;
 import android.widget.TabHost;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 public class MetaWatch extends TabActivity {
@@ -150,18 +149,6 @@ public class MetaWatch extends TabActivity {
 	        textView = MetaWatchStatus.textView;
 	        toggleButton = MetaWatchStatus.toggleButton;
         }
-    }
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.menu, menu);
-	    return true;
-	}
-	
-	@Override
-	protected void onStart() {
-		super.onStart();
 
 		MetaWatchService.loadPreferences(this);
 		
@@ -187,6 +174,19 @@ public class MetaWatch extends TabActivity {
 		if (isServiceRunning() || Preferences.autoConnect) {
 			startService();
 		}
+    }
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.menu, menu);
+	    return true;
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+
 	}
 
 	@Override
@@ -266,7 +266,7 @@ public class MetaWatch extends TabActivity {
 						"<h1>MetaWatch</h1>" +
 						"<img src=\"splash.png\">" +
 						"<p>Version " + Utils.getVersion(this) + ".</p>" +
-						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald and Kyle Schroeder and Chris Boyle.</p>" +
+						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald, Kyle Schroeder, Garth Bushell and Chris Boyle.</p>" +
 						"<p>© Copyright 2011-2012 Meta Watch Ltd.</p>" +
 						"</center></body></html>";
         webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "utf-8", null);
@@ -357,18 +357,6 @@ public class MetaWatch extends TabActivity {
     
     	textView.append("\nMessage Queue Length: " + Protocol.getQueueLength());
     	textView.append("\nNotification Queue Length: " + Notification.getQueueLength() + "\n");
-    	if (Protocol.isStalled()) {
-    		if (MetaWatchService.connectionState == MetaWatchService.ConnectionState.CONNECTED) {
-	    		textView.append("\n**CONNECTION STALLED**\n");
-	    		if (Preferences.autoRestart) {
-		    		Toast.makeText(this, "Restarting stalled connection", Toast.LENGTH_SHORT);
-		    		Protocol.resetStalledFlag();
-		    		stopService();
-		    		startService();
-		    		if (Preferences.logging) Log.d(MetaWatch.TAG, "Restarted stalled service");
-	    		}
-    		}
-    	}	
     }
     
     private void printDate(long ticks) {

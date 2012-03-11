@@ -190,12 +190,8 @@ public class NotificationBuilder {
 	public static void createOtherNotification(Context context, String appName, String notificationText, Bitmap icon) {
 		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsOtherNotificationNumberBuzzes");				
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
-			if (MetaWatchService.Preferences.stickyNotifications) {
-				Bitmap[] bitmaps = smartNotify(context, icon, appName, notificationText);
-				Notification.addBitmapNotification(context, bitmaps, vibratePattern, -1);
-			} else {
-				Notification.addTextNotification(context, appName + ": " + notificationText, vibratePattern, Notification.getDefaultNotificationTimeout(context));
-			}
+			Bitmap[] bitmaps = smartNotify(context, icon, appName, notificationText);
+			Notification.addBitmapNotification(context, bitmaps, vibratePattern, Notification.getDefaultNotificationTimeout(context));
 		} else {
 			byte[] scroll = new byte[800];
 			int len = Protocol.createOled2linesLong(context, notificationText, scroll);
@@ -253,12 +249,18 @@ public class NotificationBuilder {
 				
 		canvas.drawColor(Color.WHITE);
 		
-		Bitmap icon = Utils.loadBitmapFromAssets(context, iconPath);
-				
-		canvas.drawBitmap(icon, 0, 0, paint);
-		canvas.drawText(header, icon.getWidth()+1, icon.getHeight()-2, paintHead);
+		int iconWidth = 0;
+		int iconHeight = 16;
+		if (iconPath!=null) {
+			Bitmap icon = Utils.loadBitmapFromAssets(context, iconPath);
+			canvas.drawBitmap(icon, 0, 0, paint);
+			iconWidth = icon.getWidth();
+			iconHeight = icon.getHeight();
+		}			
 		
-		canvas.drawLine(1, icon.getHeight(), 95, icon.getHeight(), paint);
+		canvas.drawText(header, iconWidth+1, iconHeight-2, paintHead);
+		
+		canvas.drawLine(1, iconHeight, 95, iconHeight, paint);
 		
 		String body = "";		
 		for (String line : lines) {
@@ -272,7 +274,7 @@ public class NotificationBuilder {
 				android.text.Layout.Alignment.ALIGN_CENTER, 1.3f, 0, false);
 		
 		int textHeight = staticLayout.getHeight();
-		int headerHeight = icon.getHeight()+2;
+		int headerHeight = iconHeight+2;
 		int textY = (56) - (textHeight/2);
 		if (textY < headerHeight)
 			textY = headerHeight;

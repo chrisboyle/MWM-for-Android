@@ -45,6 +45,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -168,7 +169,7 @@ public class Idle {
 				canvas.drawBitmap(Utils.loadBitmapFromAssets(context, "dummy_clock.png"), 0, 0, null);
 			} 
 	
-			if(widgetScreens.size() >= page)
+			if(widgetScreens.size() > page)
 			{
 				ArrayList<WidgetRow> rowsToDraw = widgetScreens.get(page);
 				
@@ -184,9 +185,20 @@ public class Idle {
 					row.draw(widgetData, canvas, yPos);
 					yPos += row.getHeight() + space;
 				}
-				
+
+				if (Preferences.displayWidgetRowSeparator) {
+					int i = (page==0 ? -1:0);
+					yPos = 0 + space;
+					for(WidgetRow row : rowsToDraw) {
+						yPos += row.getHeight() + space;
+						i++;
+						if (i!=rowsToDraw.size())
+							drawLine(canvas, yPos);
+					}
+				}
+
 			}
-				
+
 		}
 		else {
 			
@@ -218,7 +230,16 @@ public class Idle {
 				canvas.restore();	
 				
 				canvas.save();			
-				layout = new StaticLayout(MediaControl.lastArtist + "\n\n" + MediaControl.lastAlbum, paintSmall, 96, Layout.Alignment.ALIGN_CENTER, 1.0f, 0, false);
+				StringBuilder lowerText = new StringBuilder();
+				if(!MediaControl.lastArtist.equals("")) {
+					lowerText.append(MediaControl.lastArtist);
+				}
+				if(!MediaControl.lastAlbum.equals("")) {
+					if(lowerText.length()>0)
+						lowerText.append("\n\n");
+					lowerText.append(MediaControl.lastAlbum);
+				}
+				layout = new StaticLayout(lowerText.toString(), paintSmall, 96, Layout.Alignment.ALIGN_CENTER, 1.0f, 0, false);
 				height = layout.getHeight();
 				textY = 70 - (height/2);
 				if(textY<54) {
@@ -232,6 +253,18 @@ public class Idle {
 		}
 		
 		return bitmap;
+	}
+	
+	public static Canvas drawLine(Canvas canvas, int y) {
+	  Paint paint = new Paint();
+	  paint.setColor(Color.BLACK);
+
+	  int left = 3;
+
+	  for (int i = 0+left; i < 96-left; i += 3)
+	    canvas.drawLine(i, y, i+2, y, paint);
+	
+	  return canvas;
 	}
 	
 	private static synchronized void sendLcdIdle(Context context) {

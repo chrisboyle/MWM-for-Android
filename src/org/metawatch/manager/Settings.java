@@ -34,6 +34,8 @@ package org.metawatch.manager;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -54,6 +56,8 @@ public class Settings extends PreferenceActivity {
 	PreferenceScreen preferenceScreen;
 	Preference discovery;
 	Preference appBlacklist;
+	Preference backup;
+	Preference restore;
 	
 	EditTextPreference editTextMac;
 
@@ -104,6 +108,27 @@ public class Settings extends PreferenceActivity {
 				return false;
 			}
 		});
+		
+		backup = preferenceScreen.findPreference("Backup");
+		backup.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			public boolean onPreferenceClick(Preference arg0) {
+				Utils.backupUserPrefs(context);
+				return false;
+			}
+		});
+		
+		restore = preferenceScreen.findPreference("Restore");
+		restore.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			public boolean onPreferenceClick(Preference arg0) {
+				if( Utils.restoreUserPrefs(context) ) {		
+					// Restart				
+					AlarmManager alm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE); alm.set(AlarmManager.RTC, System.currentTimeMillis() + 1000, PendingIntent.getActivity(context, 0, new Intent(context, MetaWatch.class), 0));					
+					android.os.Process.sendSignal(android.os.Process.myPid(), android.os.Process.SIGNAL_KILL);
+				}
+				return false;
+			}
+		});
+		
 
 		super.onStart();
 	}
