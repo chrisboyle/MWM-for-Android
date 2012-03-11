@@ -36,7 +36,7 @@ public class NotificationIconsWidget implements InternalWidget
 
 		widget.id = id_0;
 		widget.description = desc_0;
-		widget.priority = 1;
+		widget.priority = 0;
 		widget.width = 1;
 		widget.height = 13;
 		synchronized (LCDNotification.iconNotifications) {

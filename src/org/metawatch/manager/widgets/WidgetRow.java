@@ -84,6 +84,7 @@ public class WidgetRow {
 		int space = justify ? (96-totalWidth)/(widgets.size()+1) : 1;
 		int x=space;
 		for(WidgetData widget : widgets) {
+			// TODO flags - notification icons = stretchy
 			if (widget.id.equals(PhoneStatusWidget.id_1))
 				x = Math.max(x, 95 - widget.width);
 			canvas.drawBitmap(widget.bitmap, x,

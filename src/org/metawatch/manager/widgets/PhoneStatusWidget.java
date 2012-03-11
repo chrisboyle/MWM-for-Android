@@ -86,6 +86,7 @@ public class PhoneStatusWidget implements InternalWidget {
 			widget.description = desc_1;
 			widget.width = 23;
 			widget.height = 13;
+			widget.priority = 10;
 
 			Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_phone_battery_11.png");
 			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
@@ -94,7 +95,7 @@ public class PhoneStatusWidget implements InternalWidget {
 
 			canvas.drawBitmap(icon, 17, 1, null);
 			if(level>-1)
-				canvas.drawRect(18, 3 + ((100-level)/8), 22, 11, paintSmall);
+				canvas.drawRect(18, Math.round(3 + ((100-level)*0.08d)), 22, 11, paintSmall);
 			if (Monitors.BatteryData.charging) {
 				Bitmap spark = Utils.loadBitmapFromAssets(context, "idle_phone_battery_charge_11.png");
 				canvas.drawBitmap(spark, 17, 1, paintXor);
