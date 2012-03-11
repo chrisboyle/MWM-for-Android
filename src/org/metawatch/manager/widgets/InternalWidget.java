@@ -18,6 +18,8 @@ public interface InternalWidget {
 		public Bitmap bitmap;
 		
 		public int priority;
+		
+		public boolean stretchyX = false, stretchyY = false;
 	}
 	
 	public void init(Context context, ArrayList<CharSequence> widgetIds);

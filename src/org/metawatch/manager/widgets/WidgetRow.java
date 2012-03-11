@@ -35,6 +35,27 @@ public class WidgetRow {
 			}
 		}
 		
+		// First, try shrinking any stretchy widgets
+		int excess = totalWidth - 96;
+		if (excess > 0) {
+			int slack = 0;
+			for (InternalWidget.WidgetData w : widgets) {
+				if (w.stretchyX) slack = Math.max(0, w.width - 11);
+			}
+			if (slack > 0) {
+				// Take same proportion from each
+				double proportion = Math.min(1, ((double)excess)/slack);
+				for (InternalWidget.WidgetData w : widgets) {
+					if (w.stretchyX) {
+						int slackHere = Math.max(0, w.width - 11);
+						int removing = (int)Math.ceil(proportion * slackHere);
+						w.width -= removing;
+						totalWidth -= removing;
+					}
+				}
+			}
+		}
+		
 		// Cull widgets to fit
 		while(totalWidth>96) {
 			int lowestPri = Integer.MAX_VALUE;
@@ -80,16 +101,20 @@ public class WidgetRow {
 		if (widgets==null)
 			return;
 		
-		boolean justify = false;  // TODO! option
-		int space = justify ? (96-totalWidth)/(widgets.size()+1) : 1;
-		int x=space;
+		int numStretchy = 0;
 		for(WidgetData widget : widgets) {
-			// TODO flags - notification icons = stretchy
-			if (widget.id.equals(PhoneStatusWidget.id_1))
-				x = Math.max(x, 95 - widget.width);
+			if (widget.stretchyX) numStretchy++;
+		}
+		int space = (96-totalWidth)/((numStretchy > 0) ? numStretchy : (widgets.size()+1));
+		int x = (numStretchy > 0) ? 0 : space;
+		for(WidgetData widget : widgets) {
 			canvas.drawBitmap(widget.bitmap, x,
 					y + totalHeight/2 - widget.height/2, null);
-			x += (space+widget.width);
+			if (numStretchy > 0) {
+				x += widget.width + (widget.stretchyX ? space : 0);
+			} else {
+				x += (space+widget.width);
+			}
 		}	
 	}
 }

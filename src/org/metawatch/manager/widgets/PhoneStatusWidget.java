@@ -84,7 +84,7 @@ public class PhoneStatusWidget implements InternalWidget {
 				canvas.drawRect(13, 8 + ((100-level)/10), 19, 18, paintSmall);
 		} else {
 			widget.description = desc_1;
-			widget.width = 23;
+			widget.width = 24;
 			widget.height = 13;
 			widget.priority = 10;
 

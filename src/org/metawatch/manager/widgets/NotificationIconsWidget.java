@@ -39,12 +39,8 @@ public class NotificationIconsWidget implements InternalWidget
 		widget.priority = 0;
 		widget.width = 1;
 		widget.height = 13;
+		widget.stretchyX = true;
 		synchronized (LCDNotification.iconNotifications) {
-			if(LCDNotification.iconNotifications.size() == 0) {
-				widget.bitmap = null;
-				result.put(id_0, widget);
-				return;
-			}
 			for (LCDNotification n : LCDNotification.iconNotifications) {
 				widget.width += n.icon.getWidth() + 1;
 			}
