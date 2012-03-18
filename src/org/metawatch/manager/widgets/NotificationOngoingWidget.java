@@ -17,7 +17,7 @@ import android.text.TextPaint;
 public class NotificationOngoingWidget implements InternalWidget
 {
 	public final static String id_0 = "notification_ongoing";
-	final static String desc_0 = "Notifications ongoing (96x53)";
+	final static String desc_0 = "Notifications ongoing (96x...)";
 	static final int TEXT_H = 6, LINE_SP = 1, LINE_H = TEXT_H + LINE_SP;
 
 	private Context context;
@@ -57,7 +57,7 @@ public class NotificationOngoingWidget implements InternalWidget
 		widget.id = id_0;
 		widget.description = desc_0;
 		widget.width = 96;
-		widget.height = 53;
+		widget.height = 40;
 		widget.priority = 1;
 		widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(widget.bitmap);

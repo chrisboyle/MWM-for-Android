@@ -31,6 +31,9 @@ public class CalendarWidget implements InternalWidget {
 	public final static String id_2 = "Calendar_19_16";
 	final static String desc_2 = "Next Calendar Appointment (19x16)";
 
+	public final static String id_3 = "Calendar_96_x";
+	final static String desc_3 = "Next Calendar Appointment (96x...)";
+
 	private Context context;
 	private TextPaint paintSmall;
 	private TextPaint paintSmallNumerals;
@@ -108,6 +111,10 @@ public class CalendarWidget implements InternalWidget {
 		if(widgetIds == null || widgetIds.contains(id_2)) {		
 			result.put(id_2, GenWidget(id_2));
 		}
+
+		if(widgetIds == null || widgetIds.contains(id_3)) {
+			result.put(id_3, GenWidget(id_3));
+		}
 	}
 
 	private InternalWidget.WidgetData GenWidget(String widget_id) {
@@ -135,12 +142,37 @@ public class CalendarWidget implements InternalWidget {
 			widget.height = 16;
 			iconFile = "idle_calendar_10.bmp";
 		}
+		else if (widget_id.equals(id_3)) {
+			widget.id = id_3;
+			widget.description = desc_3;
+			widget.width = 96;
+			widget.height = 13;
+		}
 
 		Bitmap icon = Utils.loadBitmapFromAssets(context, iconFile);
 
 		widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(widget.bitmap);
 		canvas.drawColor(Color.WHITE);
+
+		if (widget_id.equals(id_3)) {
+			paintSmall.setTextAlign(Align.LEFT);
+			canvas.drawText(meetingTime, 1, 6, paintSmall);
+
+			String text = meetingTitle;
+			if ((meetingLocation !=null) && (meetingLocation.length()>0))
+				text += " - " + meetingLocation;
+
+			canvas.save();
+			StaticLayout layout = new StaticLayout(text, paintSmall, 71, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
+			// TODO: second item if layout.getHeight() is small?
+			canvas.translate(24, 1); //position the text
+			layout.draw(canvas);
+			canvas.restore();
+
+			paintSmall.setTextAlign(Align.CENTER);
+			return widget;
+		}
 
 		if (widget.height == 16) {
 			canvas.drawBitmap(icon, 4, 0, null);
