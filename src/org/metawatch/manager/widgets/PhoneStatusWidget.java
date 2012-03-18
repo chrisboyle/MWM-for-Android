@@ -125,7 +125,7 @@ public class PhoneStatusWidget implements InternalWidget {
 				canvas.drawText(Monitors.SignalData.phoneDataType, 14, 6, paintSmall);
 				if (Monitors.SignalData.roaming) canvas.drawText("R", 9, 12, paintSmall);
 			}
-			paintSmall.setTextAlign(Align.LEFT);
+			paintSmall.setTextAlign(Align.CENTER);
 		}
 		
 		return widget;
