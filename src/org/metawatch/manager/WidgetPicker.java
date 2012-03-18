@@ -143,8 +143,23 @@ public class WidgetPicker extends ListActivity {
         
         widgetList.add(dummy);
         
-        for (Map.Entry<String,WidgetData> e : widgetMap.entrySet())
-        	widgetList.add(e.getValue());
+        int maxHeight = 0;
+        int maxWidth = 0;
+        
+		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
+			maxHeight = 96;
+			maxWidth = 96;
+		}
+		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
+			maxHeight = 16;
+			maxWidth = 80;
+		}
+        
+        for (Map.Entry<String,WidgetData> e : widgetMap.entrySet()) {
+        	WidgetData w = e.getValue();
+        	if (w.width<=maxWidth && w.height<=maxHeight)
+        		widgetList.add(w);
+        }
         
         Collections.sort(widgetList, COMPARATOR);
         

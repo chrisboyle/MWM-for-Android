@@ -53,19 +53,11 @@ public class WidgetManager {
 			widget.get(widgetsDesired, dataCache);
 		}
 		
-		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-		
-		
 		Intent intent = new Intent("org.metawatch.manager.REFRESH_WIDGET_REQUEST");
 		if(widgetsDesired==null)
-			intent.putExtra("get_previews", true);
+			intent.putExtra("org.metawatch.manager.get_previews", true);
 		else
-			if (currentapiVersion >= android.os.Build.VERSION_CODES.FROYO) {
-				intent.putCharSequenceArrayListExtra("widgets_desired", widgetsDesired);
-			}
-			else {
-				// TODO: Make Eclair compatible!
-			}
+			intent.putExtra("org.metawatch.manager.widgets_desired", widgetsDesired.toArray());
 		
 		return dataCache;
 	}
@@ -75,10 +67,7 @@ public class WidgetManager {
 			return refreshWidgets(widgetsDesired);
 		
 		return dataCache;
-	}
-
-	
-	
+	}	
 	
 	public static List<WidgetRow> getDesiredWidgetsFromPrefs() {
 		

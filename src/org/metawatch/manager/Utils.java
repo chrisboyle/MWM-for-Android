@@ -78,6 +78,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
@@ -98,6 +99,7 @@ public class Utils {
 	static public String Meeting_Title = "---";
 	static public String Meeting_Location = "---";
 	static public long Meeting_EndTimestamp;
+	static public long Meeting_StartTimestamp;
 	
 	public static String getContactNameFromNumber(Context context, String number) {
 		
@@ -271,6 +273,7 @@ public class Utils {
 
 					c.close();
 					begintemp = eventCursor.getLong(1);
+					Meeting_StartTimestamp = begintemp;
 					MeetingTime = new SimpleDateFormat("HH:mm").format(begintemp);
 					Meeting_EndTimestamp = eventCursor.getLong(2);
 
@@ -649,8 +652,14 @@ public class Utils {
 		Canvas canvas = new Canvas(bitmap);
 		canvas.drawColor(Color.WHITE);
 		
-		canvas.drawBitmap(icon, 0, 3, null);
-		canvas.drawText(text, 12, 30, textPaint);
+		if(height==16) {
+			canvas.drawBitmap(icon, 4, 0, null);
+			canvas.drawText(text, 10, 15, textPaint);
+		}
+		else if(height==32) {
+			canvas.drawBitmap(icon, 0, 3, null);
+			canvas.drawText(text, 12, 30, textPaint);
+		}
 		
 		return bitmap;
 	}
@@ -712,7 +721,7 @@ public class Utils {
     
 	public static void backupUserPrefs(Context context) {
 		final File prefsFile = new File(context.getFilesDir(), "../shared_prefs/"+context.getPackageName()+"_preferences.xml");
-		final File backupFile = new File(context.getExternalFilesDir(null), "preferenceBackup.xml");
+		final File backupFile = new File(getExternalFilesDir(context, null), "preferenceBackup.xml");
 		String error = "";
 		Toast toast;
 		try {
@@ -740,7 +749,7 @@ public class Utils {
 	}
     
 	public static boolean restoreUserPrefs(Context context) {
-		final File backupFile = new File(context.getExternalFilesDir(null), "preferenceBackup.xml");
+		final File backupFile = new File(getExternalFilesDir(context, null), "preferenceBackup.xml");
 		String error = "";
 		
 	    try {
@@ -822,6 +831,23 @@ public class Utils {
 	    if (!name.contains(".")) return name;
 	    // Otherwise, remove the last 'extension type thing'
 	    return name.substring(0, name.lastIndexOf('.'));
+	}
+	
+	public static File getExternalFilesDir(Context context, String type) {
+		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+		if (currentapiVersion >= android.os.Build.VERSION_CODES.FROYO) {
+			return context.getExternalFilesDir(type);
+		}
+		
+		// Fallback for Android 2.1
+		File folder = new File(Environment.getExternalStorageDirectory() + "/Android/data/" + context.getPackageName() + "/Files/" + (type != null ? type : "" ) );
+	
+		if(!folder.exists())
+		{
+		    folder.mkdirs();
+		} 
+		
+		return folder;
 	}
 
 }

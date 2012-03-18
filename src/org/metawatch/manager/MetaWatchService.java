@@ -89,6 +89,7 @@ public class MetaWatchService extends Service {
 	public static volatile int connectionState;
 	public static int watchType;
 	public static int watchState;
+	public static boolean fakeWatch = false; 	// Setting this to true disables all the bt comms, and just pretends its connected to a watch.  Enable by setting the MAC address to ANALOG or DIGITAL
 
 	public static TestSmsLoop testSmsLoop;
 	private boolean lastConnectionState = false;
@@ -181,9 +182,9 @@ public class MetaWatchService extends Service {
 		public static boolean overlayWeatherText = false;
 	}
 
-	final class WatchType {
-		static final int ANALOG = 1;
-		static final int DIGITAL = 2;
+	public final class WatchType {
+		public static final int ANALOG = 1;
+		public static final int DIGITAL = 2;
 	}
 
 	@Override
@@ -435,48 +436,48 @@ public class MetaWatchService extends Service {
 	void connect(Context context) {
 
 		try {
+			
+			MetaWatchService.fakeWatch = false;
+			if (Preferences.watchMacAddress.equals("DIGITAL")) {
+				MetaWatchService.fakeWatch = true;
+				MetaWatchService.watchType = MetaWatchService.WatchType.DIGITAL;
+			}
+			if (Preferences.watchMacAddress.equals("ANALOG")) {
+				MetaWatchService.fakeWatch = true;
+				MetaWatchService.watchType = MetaWatchService.WatchType.ANALOG;
+			}
 
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "Remote device address: "
 					+ Preferences.watchMacAddress);
 			if (!Preferences.loaded)
 				loadPreferences(context);
-			BluetoothDevice bluetoothDevice = bluetoothAdapter
-					.getRemoteDevice(Preferences.watchMacAddress);
+			
+			if (!MetaWatchService.fakeWatch) {
+				
+				BluetoothDevice bluetoothDevice = bluetoothAdapter
+						.getRemoteDevice(Preferences.watchMacAddress);
+	
+				if (!bluetoothAdapter.isEnabled()) {
+					return;
+				}
+			
+				if (Preferences.skipSDP) {
+					Method method = bluetoothDevice.getClass().getMethod(
+							"createRfcommSocket", new Class[] { int.class });
+					bluetoothSocket = (BluetoothSocket) method.invoke(
+							bluetoothDevice, 1);
+				} else {
+					UUID uuid = UUID
+							.fromString("00001101-0000-1000-8000-00805F9B34FB");
+					bluetoothSocket = bluetoothDevice
+							.createRfcommSocketToServiceRecord(uuid);
+				}
 
-			if (!bluetoothAdapter.isEnabled()) {
-				return;
+				bluetoothSocket.connect();
+				inputStream = bluetoothSocket.getInputStream();
+				outputStream = bluetoothSocket.getOutputStream();
 			}
-
-			/*
-			 * if (Preferences.logging) Log.d(MetaWatch.TAG, "remote device name: " +
-			 * bluetoothDevice.getName()); int bondState =
-			 * bluetoothDevice.getBondState(); String bond = ""; switch
-			 * (bondState) { case BluetoothDevice.BOND_BONDED: bond = "bonded";
-			 * break; case BluetoothDevice.BOND_BONDING: bond = "bonding";
-			 * break; case BluetoothDevice.BOND_NONE: bond = "none"; break; }
-			 * if (Preferences.logging) Log.d(MetaWatch.TAG, "bond state: " + bond);
-			 */
-
-			if (Preferences.skipSDP) {
-				Method method = bluetoothDevice.getClass().getMethod(
-						"createRfcommSocket", new Class[] { int.class });
-				bluetoothSocket = (BluetoothSocket) method.invoke(
-						bluetoothDevice, 1);
-			} else {
-				UUID uuid = UUID
-						.fromString("00001101-0000-1000-8000-00805F9B34FB");
-				bluetoothSocket = bluetoothDevice
-						.createRfcommSocketToServiceRecord(uuid);
-			}
-
-			// if (Preferences.logging) Log.d(MetaWatch.TAG, "got Bluetooth socket");
-			// if (bluetoothSocket == null)
-			// if (Preferences.logging) Log.d(MetaWatch.TAG, "Bluetooth socket is null");
-
-			bluetoothSocket.connect();
-			inputStream = bluetoothSocket.getInputStream();
-			outputStream = bluetoothSocket.getOutputStream();
-
+			
 			connectionState = ConnectionState.CONNECTED;
 			updateNotification();
 
@@ -669,6 +670,14 @@ public class MetaWatchService extends Service {
 
 	void readFromDevice() {
 
+		if (MetaWatchService.fakeWatch) {
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+			}
+			return;
+		}
+		
 		try {
 			byte[] bytes = new byte[256];
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "before blocking read");

@@ -48,6 +48,9 @@ public class PictureWidget implements InternalWidget {
 	private void loadPictures() {
 		pictures = new HashMap<String,Bitmap>();
 		descriptions = new HashMap<String,String>();
+		
+		if (searchDir==null)
+			return;
 
 		File[] imageFiles = searchDir.listFiles();
 
@@ -64,12 +67,14 @@ public class PictureWidget implements InternalWidget {
 
 	public void init(Context context, ArrayList<CharSequence> widgetIds) {
 		// Ensure the images folder exists on the SD card
-		searchDir = context.getExternalFilesDir("PictureWidget");
+		searchDir = Utils.getExternalFilesDir(context, "PictureWidget");
 
-		loadPictures();
-
-		observer = new Observer(searchDir.getAbsolutePath(), context, this);
-		observer.startWatching();
+		if (searchDir != null) {
+			loadPictures();
+	
+			observer = new Observer(searchDir.getAbsolutePath(), context, this);
+			observer.startWatching();
+		}
 	}
 
 	public void shutdown() {
@@ -90,6 +95,9 @@ public class PictureWidget implements InternalWidget {
 
 	public void get(ArrayList<CharSequence> widgetIds, Map<String,WidgetData> result) {
 
+		if (pictures==null)
+			return;
+		
 		Iterator<Entry<String, Bitmap>> it = pictures.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<String, Bitmap> pairs = it.next();

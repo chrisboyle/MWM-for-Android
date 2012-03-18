@@ -113,13 +113,23 @@ public class Idle {
 			row.doLayout(widgetData);
 		}
 		
+		int maxScreenSize = 0;
+		
+		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
+			maxScreenSize = 96;
+		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
+			maxScreenSize = 16;
+		
 		// Bucket rows into screens
 		ArrayList<ArrayList<WidgetRow>> screens = new ArrayList<ArrayList<WidgetRow>>();
 	
-		int screenSize = 30; // Initial screen has top part used by the fw clock
+		int screenSize = 0;
+		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
+			screenSize = 30; // Initial screen has top part used by the fw clock
+		
 		ArrayList<WidgetRow> screen = new ArrayList<WidgetRow>();
 		for(WidgetRow row : rows) { 
-			if(screenSize+row.getHeight() > 96) {
+			if(screenSize+row.getHeight() > maxScreenSize) {
 				screens.add(screen);
 				screen = new ArrayList<WidgetRow>();
 				screenSize = 0;
@@ -255,6 +265,46 @@ public class Idle {
 		return bitmap;
 	}
 	
+	static synchronized Bitmap createOledIdle(Context context, boolean preview, int page) {
+		
+		Bitmap bitmap = Bitmap.createBitmap(80, 16, Bitmap.Config.RGB_565);
+		Canvas canvas = new Canvas(bitmap);
+		
+		canvas.drawColor(Color.WHITE);	
+				
+		if(widgetScreens.size() > page)
+		{
+			ArrayList<WidgetRow> rowsToDraw = widgetScreens.get(page);
+			
+			int totalHeight = 0;
+			for(WidgetRow row : rowsToDraw) {
+				totalHeight += row.getHeight();
+			}
+						
+			int space = (16 - totalHeight) / (rowsToDraw.size()+1);
+			int yPos = space;
+			
+			for(WidgetRow row : rowsToDraw) {
+				row.draw(widgetData, canvas, yPos);
+				yPos += row.getHeight() + space;
+			}
+
+			if (Preferences.displayWidgetRowSeparator) {
+				int i = (page==0 ? -1:0);
+				yPos = 0 + space;
+				for(WidgetRow row : rowsToDraw) {
+					yPos += row.getHeight() + space;
+					i++;
+					if (i!=rowsToDraw.size())
+						drawLine(canvas, yPos);
+				}
+			}
+
+		}
+				
+		return bitmap;
+	}
+	
 	public static Canvas drawLine(Canvas canvas, int y) {
 	  Paint paint = new Paint();
 	  paint.setColor(Color.BLACK);
@@ -274,12 +324,25 @@ public class Idle {
 		}
 		
 		updateWidgetPages(context);
-		Bitmap bitmap = createLcdIdle(context);
-		int mode = currentPage==mediaPlayerPage ? MetaWatchService.WatchBuffers.APPLICATION : MetaWatchService.WatchBuffers.IDLE;
+		final int mode = currentPage==mediaPlayerPage ? MetaWatchService.WatchBuffers.APPLICATION : MetaWatchService.WatchBuffers.IDLE;
 		
-		Protocol.sendLcdBitmap(bitmap, mode);
+		Protocol.sendLcdBitmap(createLcdIdle(context), mode);
 		Protocol.configureIdleBufferSize(currentPage==0);
 		Protocol.updateDisplay(mode);
+	}
+	
+	private static synchronized void sendOledIdle(Context context) {
+		if(MetaWatchService.watchState != MetaWatchService.WatchStates.IDLE) {
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "Ignoring sendLcdIdle as not in idle");
+			return;
+		}
+		
+		updateWidgetPages(context);
+		
+		for (int i=0;i<4;++i) {
+			//Protocol.sendOledBitmap(createOledIdle(context, false, i), MetaWatchService.WatchBuffers.IDLE, i);
+		}
+			
 	}
 	
 	public static boolean toIdle(Context context) {
@@ -296,14 +359,19 @@ public class Idle {
 			}
 		
 		}
+		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
+			sendOledIdle(context);
+		}
 
 		return true;
 	}
 	
 	public static void updateLcdIdle(Context context) {
-		if (MetaWatchService.watchState == MetaWatchService.WatchStates.IDLE
-				&& MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
-			sendLcdIdle(context);
+		if (MetaWatchService.watchState == MetaWatchService.WatchStates.IDLE )
+			if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
+				sendLcdIdle(context);
+			else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
+				sendOledIdle(context);
 	}
 	
 }

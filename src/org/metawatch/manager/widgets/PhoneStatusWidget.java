@@ -20,12 +20,15 @@ public class PhoneStatusWidget implements InternalWidget {
 
 	public final static String id_0 = "phoneStatus_24_32";
 	final static String desc_0 = "Phone Battery Status (24x32)";
-	public final static String id_1 = "phoneStatus_mini";
-	final static String desc_1 = "Phone Status (24x13)";
+	public final static String id_1 = "phoneStatus_19_16";
+	final static String desc_1 = "Phone Battery Status (19x16)";
+	public final static String id_2 = "phoneStatus_mini";
+	final static String desc_2 = "Phone Status (24x13)";
 	
 	private Context context;
 	private TextPaint paintSmall;
 	private Paint paintXor;
+	private TextPaint paintSmallNumerals;
 		
 	public void init(Context context, ArrayList<CharSequence> widgetIds) {
 		this.context = context;
@@ -35,6 +38,12 @@ public class PhoneStatusWidget implements InternalWidget {
 		paintSmall.setTextSize(FontCache.instance(context).Small.size);
 		paintSmall.setTypeface(FontCache.instance(context).Small.face);
 		paintSmall.setTextAlign(Align.CENTER);
+		
+		paintSmallNumerals = new TextPaint();
+		paintSmallNumerals.setColor(Color.BLACK);
+		paintSmallNumerals.setTextSize(FontCache.instance(context).SmallNumerals.size);
+		paintSmallNumerals.setTypeface(FontCache.instance(context).SmallNumerals.face);
+		paintSmallNumerals.setTextAlign(Align.CENTER);
 
 		paintXor = new Paint();
 		paintXor.setXfermode(new PixelXorXfermode(Color.BLACK));
@@ -52,47 +61,68 @@ public class PhoneStatusWidget implements InternalWidget {
 		if(widgetIds == null || widgetIds.contains(id_0)) {		
 			result.put(id_0, GenWidget(id_0));
 		}
-		if(widgetIds == null || widgetIds.contains(id_1)) {
+		
+		if(widgetIds == null || widgetIds.contains(id_1)) {		
 			result.put(id_1, GenWidget(id_1));
+		}
+		
+		if(widgetIds == null || widgetIds.contains(id_2)) {
+			result.put(id_1, GenWidget(id_2));
 		}
 	}
 	
 	private InternalWidget.WidgetData GenWidget(String widget_id) {
 		InternalWidget.WidgetData widget = new InternalWidget.WidgetData();
-
-		widget.id = widget_id;
-		int level = Monitors.BatteryData.level;
-		widget.priority = level==-1 ? 0 : 1;
-
-		if (widget_id == id_0) {
+		
+		String iconFile="";
+		if( widget_id == id_0 ) {
+			widget.id = id_0;
 			widget.description = desc_0;
 			widget.width = 24;
 			widget.height = 32;
-	
-			Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_phone_status.bmp");
-
-			String count = level==-1 ? "-" : level+"%";
-
-			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
-			Canvas canvas = new Canvas(widget.bitmap);
-			canvas.drawColor(Color.WHITE);
-		
-			canvas.drawBitmap(icon, 0, 3, null);
-			canvas.drawText(count, 12, 30,  paintSmall);
-	
-			if(level>-1)
-				canvas.drawRect(13, 8 + ((100-level)/10), 19, 18, paintSmall);
-		} else {
+			iconFile = "idle_phone_status.bmp";
+		}
+		else if( widget_id == id_1 ) {
+			widget.id = id_1;
+			widget.description = desc_1;
+			widget.width = 19;
+			widget.height = 16; 
+			iconFile = "idle_phone_status_10.bmp";
+		}
+		else if( widget_id == id_2 ) {
+			widget.id = id_2;
 			widget.description = desc_1;
 			widget.width = 24;
 			widget.height = 13;
+			iconFile = "idle_phone_battery_11.png";
+		}
+		
+		Bitmap icon = Utils.loadBitmapFromAssets(context, iconFile);
+
+		int level = Monitors.BatteryData.level;
+		String count = level==-1 ? "-" : level+"%";
+
+		widget.priority = level==-1 ? 0 : 1;		
+		widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
+		Canvas canvas = new Canvas(widget.bitmap);
+		canvas.drawColor(Color.WHITE);
+		
+		if (widget_id == id_0 ) {
+			canvas.drawBitmap(icon, 0, 3, null);
+			canvas.drawText(count, 12, 30,  paintSmall);
+		
+			if(level>-1)
+				canvas.drawRect(13, 8 + ((100-level)/10), 19, 18, paintSmall);
+		}
+		else if (widget_id == id_1 ) {
+			canvas.drawBitmap(icon, 4, 0, null);
+			canvas.drawText(count, 10, 15,  paintSmallNumerals);
+		
+			if(level>-1)
+				canvas.drawRect(11, 1 + ((100-level)/12), 14, 8, paintSmall);	
+		}
+		else if( widget_id == id_2 ) {
 			widget.priority = 10;
-
-			Bitmap icon = Utils.loadBitmapFromAssets(context, "idle_phone_battery_11.png");
-			widget.bitmap = Bitmap.createBitmap(widget.width, widget.height, Bitmap.Config.RGB_565);
-			Canvas canvas = new Canvas(widget.bitmap);
-			canvas.drawColor(Color.WHITE);
-
 			canvas.drawBitmap(icon, 17, 1, null);
 			if(level>-1)
 				canvas.drawRect(18, Math.round(3 + ((100-level)*0.08d)), 22, 11, paintSmall);

@@ -107,7 +107,10 @@ public class Monitors {
 	private static ContentObserverCalls contentObserverCalls;
 	static ContentResolver contentResolverCalls;
 	
-	//public static int gmailCount = 0;
+	private static ContentObserverAppointments contentObserverAppointments;
+	static ContentResolver contentResolverAppointments;
+
+  //public static int gmailCount = 0;
 	static Hashtable<String, Integer> gmailUnreadCounts = new Hashtable<String, Integer>();
 	
 	public static LocationManager locationManager;
@@ -117,7 +120,9 @@ public class Monitors {
 	
 	private static BroadcastReceiver batteryLevelReceiver, wifiReceiver;
 	
-	public static class WeatherData {
+	public static boolean calendarChanged = false;
+
+  public static class WeatherData {
 		public static boolean updating = false;
 		public static boolean received = false;
 		public static String icon;
@@ -211,14 +216,19 @@ public class Monitors {
 			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Initialising Geolocation");
 			
-			locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-			locationProvider = LocationManager.NETWORK_PROVIDER;
-			
-			networkLocationListener = new NetworkLocationListener(context);
-			
-			locationManager.requestLocationUpdates(locationProvider, 30 * 60 * 1000, 500, networkLocationListener);
-			
-			RefreshLocation();
+			try {
+				locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+				locationProvider = LocationManager.NETWORK_PROVIDER;
+				
+				networkLocationListener = new NetworkLocationListener(context);
+				
+				locationManager.requestLocationUpdates(locationProvider, 30 * 60 * 1000, 500, networkLocationListener);
+				
+				RefreshLocation();
+			}
+			catch (IllegalArgumentException e) {
+				if (Preferences.logging) Log.d(MetaWatch.TAG,"Failed to initialise Geolocation "+e.getMessage());
+			}
 		}
 		else {
 			if (Preferences.logging) Log.d(MetaWatch.TAG,"Geolocation disabled");
@@ -253,6 +263,13 @@ public class Monitors {
 		} catch (Exception x) {
 		}
 	
+		try {
+			contentObserverAppointments = new ContentObserverAppointments(context);
+			Uri uri = Uri.parse("content://com.android.calendar/calendars/");
+			contentResolverAppointments = context.getContentResolver();
+			contentResolverAppointments.registerContentObserver(uri, true, contentObserverAppointments);
+		} catch (Exception x) {
+			}
 		
 		// temporary one time update
 		updateWeatherData(context);
@@ -718,7 +735,27 @@ public class Monitors {
 		}
 	}
 	
-	private static class NetworkLocationListener implements LocationListener {
+	private static class ContentObserverAppointments extends ContentObserver {
+
+		Context context;
+
+		public ContentObserverAppointments(Context context) {
+			super(null);
+			this.context = context;     
+		}
+
+		@Override
+		public void onChange(boolean selfChange) {
+			super.onChange(selfChange);     
+			// change in calendar database
+			if (Preferences.logging) Log.d(MetaWatch.TAG, "calendar change");
+				calendarChanged = true;
+				Idle.updateLcdIdle(context);
+				calendarChanged = false;
+			}
+		}
+
+		private static class NetworkLocationListener implements LocationListener {
 
 		Context context;
 		

@@ -175,49 +175,55 @@ public class WidgetSetup extends Activity {
     	  	
     	int pages = Idle.numPages();
     	for(int i=0; i<pages; ++i) {
-    		Bitmap bmp = Idle.createLcdIdle(this, true, i);
-    		//LayoutInflater factory = LayoutInflater.from(this);
-    		LayoutInflater factory = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    		Bitmap bmp = null;
+    		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
+    			bmp = Idle.createLcdIdle(this, true, i);
+    		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
+    			bmp = Idle.createOledIdle(this, true, i);
 
-    		View v = factory.inflate(R.layout.idle_screen_preview, null);
-    		ImageView iv = (ImageView)v.findViewById(R.id.image);
-    		iv.setImageBitmap(bmp);
-    		iv.setClickable(true);
-    		iv.setTag(i);
-    		iv.setOnClickListener(new OnClickListener() {
-    		    //@Override
-    		    public void onClick(View v) {
-    		    	Integer page = (Integer)v.getTag();
-    		        Idle.toPage(page);
-    		        Idle.updateLcdIdle(v.getContext());
-    		    }
-    		});
-    		ll.addView(v);
+    		if (bmp!=null) {
+	    		LayoutInflater factory = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	
+	    		View v = factory.inflate(R.layout.idle_screen_preview, null);
+	    		ImageView iv = (ImageView)v.findViewById(R.id.image);
+	    		iv.setImageBitmap(bmp);
+	    		iv.setClickable(true);
+	    		iv.setTag(i);
+	    		iv.setOnClickListener(new OnClickListener() {
+	    		    //@Override
+	    		    public void onClick(View v) {
+	    		    	Integer page = (Integer)v.getTag();
+	    		        Idle.toPage(page);
+	    		        Idle.updateLcdIdle(v.getContext());
+	    		    }
+	    		});
+	    		ll.addView(v);
+    		}
     	}
     }
     
     private void storeWidgetLayout() {
     	
-    	String out = "";
+        StringBuilder out = new StringBuilder();
     	for(List<Map<String, String>> row : childData) {
     		if(out.length()>0)
-    			out+="|";
+    			out.append("|");
     		
-    		String line = "";
+    		StringBuilder line = new StringBuilder();
     		for(Map<String, String> child : row) {
         		String id = child.get(ID);	
         		if(id!="") {
 	        		if(line.length()>0)
-	        			line+=",";
+	        			line.append(",");
 	        		
-	        		line+=id;
+	        		line.append(id);
         		}
     		}
     		
-    		out+=line;
+    		out.append(line);
     	}
     	
-    	Preferences.widgets = out;
-    	MetaWatchService.saveWidgets(this, out);
+    	Preferences.widgets = out.toString();
+    	MetaWatchService.saveWidgets(this, out.toString());
     }
 }
