@@ -67,7 +67,7 @@ public class PhoneStatusWidget implements InternalWidget {
 		}
 		
 		if(widgetIds == null || widgetIds.contains(id_2)) {
-			result.put(id_1, GenWidget(id_2));
+			result.put(id_2, GenWidget(id_2));
 		}
 	}
 	
@@ -91,7 +91,7 @@ public class PhoneStatusWidget implements InternalWidget {
 		}
 		else if( widget_id == id_2 ) {
 			widget.id = id_2;
-			widget.description = desc_1;
+			widget.description = desc_2;
 			widget.width = 24;
 			widget.height = 13;
 			iconFile = "idle_phone_battery_11.png";
