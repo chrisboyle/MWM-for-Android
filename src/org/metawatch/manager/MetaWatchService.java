@@ -901,6 +901,10 @@ public class MetaWatchService extends Service {
 				String result = RMilk.getTasksText(context);
 				NotificationBuilder.createSmart(context, "RTM Tasks", result, null, new VibratePattern(false,0,0,0));
 				break;
+			case Protocol.NOTIFICATION_READER:
+				sendBroadcast(new Intent("name.boyle.chris.notificationreader.action.TOGGLE"));
+				Log.d(MetaWatch.TAG, "toggled notification reader");
+				break;
 				
 			case Idle.IDLE_NEXT_PAGE:
 				Idle.nextPage();

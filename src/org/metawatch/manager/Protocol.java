@@ -57,6 +57,7 @@ public class Protocol {
 
 	public static final byte REPLAY = 30;
 	public static final byte RTM = 31;
+	public static final byte NOTIFICATION_READER = 32;
 	
 	private static volatile BlockingQueue<byte[]> sendQueue = new LinkedBlockingQueue<byte[]>();
 
@@ -521,6 +522,10 @@ public class Protocol {
 
 	public static void enableRTM() {
 		enableButton(1, 0, RTM, 0);
+	}
+
+	public static void enableNotificationReader() {
+		enableButton(1, 0, NOTIFICATION_READER, 0);
 	}
 
 	public static void enableMediaButtons() {
