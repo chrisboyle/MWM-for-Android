@@ -166,7 +166,7 @@ public class CalendarWidget implements InternalWidget {
 			canvas.save();
 			StaticLayout layout = new StaticLayout(text, paintSmall, 71, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, false);
 			// TODO: second item if layout.getHeight() is small?
-			canvas.translate(24, 1); //position the text
+			canvas.translate(25, 1); //position the text
 			layout.draw(canvas);
 			canvas.restore();
 
