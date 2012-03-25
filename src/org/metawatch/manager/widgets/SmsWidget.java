@@ -17,8 +17,8 @@ public class SmsWidget implements InternalWidget {
 	public final static String id_0 = "unreadSms_24_32";
 	final static String desc_0 = "Unread SMS (24x32)";
 	
-	public final static String id_1 = "unreadSms_19_16";
-	final static String desc_1 = "Unread SMS (19x16)";
+	public final static String id_1 = "unreadSms_16_16";
+	final static String desc_1 = "Unread SMS (16x16)";
 	
 	private Context context;
 	private TextPaint paintSmall;
@@ -73,7 +73,7 @@ public class SmsWidget implements InternalWidget {
 		else if( widget_id == id_1 ) {
 			widget.id = id_1;
 			widget.description = desc_1;
-			widget.width = 19;
+			widget.width = 16;
 			widget.height = 16;
 			iconFile = "idle_sms_10.bmp";
 		}

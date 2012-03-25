@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -59,7 +60,7 @@ public class WidgetSetup extends Activity {
 		if(adapter!=null)
 			return;
 		
-		widgetMap = WidgetManager.getCachedWidgets(null);
+		widgetMap = WidgetManager.getCachedWidgets(this, null);
 			
 		widgetList = (ExpandableListView) findViewById(R.id.widgetList);		
 		widgetList.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
@@ -78,7 +79,7 @@ public class WidgetSetup extends Activity {
 	    childData = new ArrayList<List<Map<String, String>>>();
 
 	    // Add dummy entries at the end
-		ArrayList<String> rows = new ArrayList<String>(Arrays.asList(Preferences.widgets.split("\\|")));
+		ArrayList<String> rows = new ArrayList<String>(Arrays.asList(MetaWatchService.getWidgets(this).split("\\|")));
 		if (rows.size()>0 && rows.get(rows.size()-1).length()>0) {
 			rows.add("");
 		}
@@ -139,7 +140,7 @@ public class WidgetSetup extends Activity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
     	super.onActivityResult(requestCode, resultCode, data);
 
-		widgetMap = WidgetManager.getCachedWidgets(null);
+		widgetMap = WidgetManager.getCachedWidgets(this, null);
     	
         if (resultCode == Activity.RESULT_OK) {      	  
         	String id = data.getStringExtra("selectedWidget");
@@ -163,12 +164,12 @@ public class WidgetSetup extends Activity {
         	adapter.notifyDataSetChanged();
         	storeWidgetLayout();
         	refreshPreview();
-        	Idle.updateLcdIdle(this);
+        	Idle.updateIdle(this, true);
         }
     }
     
     private void refreshPreview() {
-    	Idle.updateWidgetPages(this);
+    	Idle.updateWidgetPages(this, true);
     	LinearLayout ll = (LinearLayout) findViewById(R.id.idlePreviews);
     	
     	ll.removeAllViews();
@@ -182,19 +183,28 @@ public class WidgetSetup extends Activity {
     			bmp = Idle.createOledIdle(this, true, i);
 
     		if (bmp!=null) {
+    			
+    			int backCol = Color.LTGRAY;
+    			
+        		if(Preferences.invertLCD || MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
+        			Utils.invertBitmap(bmp);
+        			backCol = Color.DKGRAY;
+        		}
+    			
 	    		LayoutInflater factory = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	
 	    		View v = factory.inflate(R.layout.idle_screen_preview, null);
 	    		ImageView iv = (ImageView)v.findViewById(R.id.image);
 	    		iv.setImageBitmap(bmp);
 	    		iv.setClickable(true);
+	    		iv.setBackgroundColor(backCol);
 	    		iv.setTag(i);
 	    		iv.setOnClickListener(new OnClickListener() {
 	    		    //@Override
 	    		    public void onClick(View v) {
 	    		    	Integer page = (Integer)v.getTag();
 	    		        Idle.toPage(page);
-	    		        Idle.updateLcdIdle(v.getContext());
+	    		        Idle.updateIdle(v.getContext(), true);
 	    		    }
 	    		});
 	    		ll.addView(v);
@@ -223,7 +233,6 @@ public class WidgetSetup extends Activity {
     		out.append(line);
     	}
     	
-    	Preferences.widgets = out.toString();
     	MetaWatchService.saveWidgets(this, out.toString());
     }
 }

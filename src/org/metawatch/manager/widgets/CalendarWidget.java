@@ -28,8 +28,8 @@ public class CalendarWidget implements InternalWidget {
 	public final static String id_1 = "Calendar_96_32";
 	final static String desc_1 = "Next Calendar Appointment (96x32)";
 
-	public final static String id_2 = "Calendar_19_16";
-	final static String desc_2 = "Next Calendar Appointment (19x16)";
+	public final static String id_2 = "Calendar_16_16";
+	final static String desc_2 = "Next Calendar Appointment (16x16)";
 
 	public final static String id_3 = "Calendar_96_x";
 	final static String desc_3 = "Next Calendar Appointment (96x...)";
@@ -90,7 +90,7 @@ public class CalendarWidget implements InternalWidget {
 		if (readCalendar) {
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() start");
 			meetingTime = Utils.readCalendar(context, 0);
-			meetingStartTimestamp = Utils.Meeting_EndTimestamp;
+			meetingStartTimestamp = Utils.Meeting_StartTimestamp;
 			meetingEndTimestamp = Utils.Meeting_EndTimestamp;
 			meetingLocation = Utils.Meeting_Location;
 			meetingTitle = Utils.Meeting_Title;
@@ -138,7 +138,7 @@ public class CalendarWidget implements InternalWidget {
 		else if (widget_id.equals(id_2)) {
 			widget.id = id_2;
 			widget.description = desc_2;
-			widget.width = 19;
+			widget.width = 16;
 			widget.height = 16;
 			iconFile = "idle_calendar_10.bmp";
 		}
@@ -175,11 +175,11 @@ public class CalendarWidget implements InternalWidget {
 		}
 
 		if (widget.height == 16) {
-			canvas.drawBitmap(icon, 4, 0, null);
+			canvas.drawBitmap(icon, 2, 0, null);
 			if(meetingTime.equals("None"))
-				canvas.drawText("-", 10, 15, paintSmallNumerals);
+				canvas.drawText("-", 8, 15, paintSmallNumerals);
 			else
-				canvas.drawText(meetingTime, 10, 15, paintSmallNumerals);
+				canvas.drawText(meetingTime, 8, 15, paintSmallNumerals);
 		}
 		else {
 			canvas.drawBitmap(icon, 0, 3, null);

@@ -34,7 +34,7 @@ public class PictureWidget implements InternalWidget {
 			synchronized (this) {
 				Log.d(MetaWatch.TAG, "Pictures updated!");
 				parent.loadPictures();
-				Idle.updateLcdIdle(context);
+				Idle.updateIdle(context, true);
 			}
 		}
 	}

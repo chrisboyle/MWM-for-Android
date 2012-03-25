@@ -34,6 +34,7 @@ package org.metawatch.manager;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
 import org.metawatch.manager.Notification.VibratePattern;
+import org.metawatch.manager.widgets.WidgetManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -60,6 +61,12 @@ public class ApiIntentReceiver extends BroadcastReceiver {
 				byte[] buffer = intent.getByteArrayExtra("buffer");
 				Application.updateAppMode(context, buffer);
 			}
+			return;
+		}
+		
+		if (action.equals("org.metawatch.manager.WIDGET_UPDATE")) {
+			Log.d(MetaWatch.TAG, "WIDGET_UPDATE received");
+			WidgetManager.getFromIntent(context, intent);
 			return;
 		}
 		

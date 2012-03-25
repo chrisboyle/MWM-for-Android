@@ -112,9 +112,7 @@ public class IntentReceiver extends BroadcastReceiver {
 								+ recipient + "' is "
 								+ Monitors.getGmailUnreadCount(recipient));
 				
-				if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
-					Idle.updateLcdIdle(context);
-				}
+				Idle.updateIdle(context, true);
 				
 				return;
 			}
@@ -156,7 +154,7 @@ public class IntentReceiver extends BroadcastReceiver {
 				NotificationBuilder.createK9(context, sender, subject, account+":"+folder);
 			}
 			Utils.refreshUnreadK9Count(context);
-			Idle.updateLcdIdle(context);
+			Idle.updateIdle(context, true);
 
 			return;
 		}	
@@ -212,7 +210,7 @@ public class IntentReceiver extends BroadcastReceiver {
 		else if (intent.getAction().equals("org.metawatch.manager.UPDATE_CALENDAR")){
 			
 			if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
-				Idle.updateLcdIdle(context);
+				Idle.updateIdle(context, true);
 			}
 			
 		}

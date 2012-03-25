@@ -445,7 +445,7 @@ public class Monitors {
 			WeatherData.received = true;
 			WeatherData.timeStamp = System.currentTimeMillis();		
 
-			Idle.updateLcdIdle(context);
+			Idle.updateIdle(context, true);
 			MetaWatchService.notifyClients();
 			
 		} catch (Exception e) {
@@ -472,7 +472,7 @@ public class Monitors {
 				if (diff < 5 * 60*1000) {
 					if (Preferences.logging) Log.d(MetaWatch.TAG,
 							"Skipping weather update - updated less than 5m ago");
-					Idle.updateLcdIdle(context);
+					Idle.updateIdle(context, true);
 					return;
 				}
 			}
@@ -574,7 +574,7 @@ public class Monitors {
 				
 				WeatherData.received = true;
 				
-				Idle.updateLcdIdle(context);
+				Idle.updateIdle(context, true);
 				MetaWatchService.notifyClients();
 				WeatherData.timeStamp = System.currentTimeMillis();		
 		    }
@@ -713,7 +713,7 @@ public class Monitors {
 		public void onChange(boolean selfChange) {
 			super.onChange(selfChange);			
 			// change in SMS/MMS database			
-			Idle.updateLcdIdle(context);
+			Idle.updateIdle(context, true);
 		}
 	}
 	
@@ -731,7 +731,7 @@ public class Monitors {
 			super.onChange(selfChange);			
 			// change in call history database
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "call history change");
-			Idle.updateLcdIdle(context);
+			Idle.updateIdle(context, true);
 		}
 	}
 	
@@ -750,7 +750,7 @@ public class Monitors {
 			// change in calendar database
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "calendar change");
 				calendarChanged = true;
-				Idle.updateLcdIdle(context);
+				Idle.updateIdle(context, true);
 				calendarChanged = false;
 			}
 		}
@@ -876,7 +876,7 @@ public class Monitors {
 					//if (Preferences.logging) Log.d(MetaWatch.TAG, "Battery level changed: "+rawlevel+"/"+scale+" - "+level+"%");
 					BatteryData.level = level;
 					BatteryData.charging = charging;
-					Idle.updateLcdIdle(context);
+					Idle.updateIdle(context, true);
 				}
 			}
 		};
@@ -920,7 +920,7 @@ public class Monitors {
 				}
 				if (wifiBars != SignalData.wifiBars) {
 					SignalData.wifiBars = wifiBars;
-					Idle.updateLcdIdle(context);
+					Idle.updateIdle(context, true);
 				}
 			}
 		};

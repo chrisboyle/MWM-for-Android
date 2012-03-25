@@ -20,8 +20,10 @@ public class PhoneStatusWidget implements InternalWidget {
 
 	public final static String id_0 = "phoneStatus_24_32";
 	final static String desc_0 = "Phone Battery Status (24x32)";
-	public final static String id_1 = "phoneStatus_19_16";
-	final static String desc_1 = "Phone Battery Status (19x16)";
+	
+	public final static String id_1 = "phoneStatus_16_16";
+	final static String desc_1 = "Phone Battery Status (16x16)";
+	
 	public final static String id_2 = "phoneStatus_mini";
 	final static String desc_2 = "Phone Status (24x13)";
 	
@@ -85,7 +87,7 @@ public class PhoneStatusWidget implements InternalWidget {
 		else if( widget_id == id_1 ) {
 			widget.id = id_1;
 			widget.description = desc_1;
-			widget.width = 19;
+			widget.width = 16;
 			widget.height = 16; 
 			iconFile = "idle_phone_status_10.bmp";
 		}
@@ -115,11 +117,11 @@ public class PhoneStatusWidget implements InternalWidget {
 				canvas.drawRect(13, 8 + ((100-level)/10), 19, 18, paintSmall);
 		}
 		else if (widget_id == id_1 ) {
-			canvas.drawBitmap(icon, 4, 0, null);
-			canvas.drawText(count, 10, 15,  paintSmallNumerals);
+			canvas.drawBitmap(icon, 2, 0, null);
+			canvas.drawText(count, 8, 15,  paintSmallNumerals);
 		
 			if(level>-1)
-				canvas.drawRect(11, 1 + ((100-level)/12), 14, 8, paintSmall);	
+				canvas.drawRect(9, 1 + ((100-level)/12), 12, 8, paintSmall);	
 		}
 		else if( widget_id == id_2 ) {
 			widget.priority = 10;

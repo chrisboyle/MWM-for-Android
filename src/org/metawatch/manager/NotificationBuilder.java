@@ -108,7 +108,7 @@ public class NotificationBuilder {
 		} else {
 			byte[] scroll = new byte[800];
 			int len = Protocol.createOled2linesLong(context, subject, scroll);
-			Notification.addOledNotification(context, Protocol.createOled1line(context, "email.bmp", "K9 mail from"), Protocol.createOled2lines(context, sender, subject), scroll, len, vibratePattern);
+			Notification.addOledNotification(context, Protocol.createOled1line(context, "email.bmp", "K9 mail"), Protocol.createOled2lines(context, sender, subject), scroll, len, vibratePattern);
 		}
 	}
 	
@@ -151,14 +151,14 @@ public class NotificationBuilder {
 	}
 	
 	public static void createAlarm(Context context) {
-		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsAlarmNumberBuzzes");				
+		VibratePattern vibratePattern = createVibratePatternFromPreference(context, "settingsAlarmNumberBuzzes");	
+	    final Calendar t = Calendar.getInstance();
+	    final String currentTime = DateFormat.getTimeFormat(context).format(t.getTime());
 		if (MetaWatchService.watchType == WatchType.DIGITAL) {
-		    final Calendar t = Calendar.getInstance();
-		    final String currentTime = DateFormat.getTimeFormat(context).format(t.getTime());
 			Bitmap bitmap = smartLines(context, "timer.bmp", "Alarm", new String[] {currentTime}, FontCache.FontSize.LARGE);		
 			Notification.addBitmapNotification(context, bitmap, vibratePattern, Notification.getDefaultNotificationTimeout(context));
 		} else {
-			Notification.addOledNotification(context, Protocol.createOled1line(context, "timer.bmp", "Alarm"), Protocol.createOled1line(context, null, "Alarm"), null, 0, vibratePattern);
+			Notification.addOledNotification(context, Protocol.createOled1line(context, "timer.bmp", "Alarm"), Protocol.createOled1line(context, null, currentTime), null, 0, vibratePattern);
 		}
 	}
 	

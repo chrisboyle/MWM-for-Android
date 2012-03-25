@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
+import org.metawatch.manager.Notification.VibratePattern;
 import org.metawatch.manager.widgets.InternalWidget.WidgetData;
 import org.metawatch.manager.widgets.WidgetManager;
 import org.metawatch.manager.widgets.WidgetRow;
@@ -54,6 +55,7 @@ import android.util.Log;
 public class Idle {
 	
 	final static byte IDLE_NEXT_PAGE = 60;
+	final static byte IDLE_OLED_DISPLAY = 61;
 
 	static int currentPage = 0;
 	
@@ -94,20 +96,24 @@ public class Idle {
 	private static ArrayList<ArrayList<WidgetRow>> widgetScreens = null;
 	private static Map<String,WidgetData> widgetData = null;
 	
-	public static synchronized void updateWidgetPages(Context context)
+	public static synchronized void updateWidgetPages(Context context, boolean refresh)
 	{
 		if(!widgetsInitialised) {
 			WidgetManager.initWidgets(context, null);
 			widgetsInitialised = true;
 		}
 		
-		List<WidgetRow> rows = WidgetManager.getDesiredWidgetsFromPrefs();
+		List<WidgetRow> rows = WidgetManager.getDesiredWidgetsFromPrefs(context);
 		
 		ArrayList<CharSequence> widgetsDesired = new ArrayList<CharSequence>();
 		for(WidgetRow row : rows) {
 			widgetsDesired.addAll(row.getIds());
 		}			
-		widgetData = WidgetManager.refreshWidgets(widgetsDesired);
+		
+		if (refresh)
+			widgetData = WidgetManager.refreshWidgets(context, widgetsDesired);
+		else
+			widgetData = WidgetManager.getCachedWidgets(context, widgetsDesired);
 		
 		for(WidgetRow row : rows) { 
 			row.doLayout(widgetData);
@@ -118,7 +124,7 @@ public class Idle {
 		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
 			maxScreenSize = 96;
 		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
-			maxScreenSize = 16;
+			maxScreenSize = 32;
 		
 		// Bucket rows into screens
 		ArrayList<ArrayList<WidgetRow>> screens = new ArrayList<ArrayList<WidgetRow>>();
@@ -267,7 +273,7 @@ public class Idle {
 	
 	static synchronized Bitmap createOledIdle(Context context, boolean preview, int page) {
 		
-		Bitmap bitmap = Bitmap.createBitmap(80, 16, Bitmap.Config.RGB_565);
+		Bitmap bitmap = Bitmap.createBitmap(80, 32, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(bitmap);
 		
 		canvas.drawColor(Color.WHITE);	
@@ -276,12 +282,13 @@ public class Idle {
 		{
 			ArrayList<WidgetRow> rowsToDraw = widgetScreens.get(page);
 			
-			int totalHeight = 0;
-			for(WidgetRow row : rowsToDraw) {
-				totalHeight += row.getHeight();
-			}
+			//int totalHeight = 0;
+			//for(WidgetRow row : rowsToDraw) {
+			//	totalHeight += row.getHeight();
+			//}
 						
-			int space = (16 - totalHeight) / (rowsToDraw.size()+1);
+			//int space = (32 - totalHeight) / (rowsToDraw.size()+1);
+			int space = 0;
 			int yPos = space;
 			
 			for(WidgetRow row : rowsToDraw) {
@@ -317,13 +324,14 @@ public class Idle {
 	  return canvas;
 	}
 	
-	private static synchronized void sendLcdIdle(Context context) {
+	private static synchronized void sendLcdIdle(Context context, boolean refresh) {
 		if(MetaWatchService.watchState != MetaWatchService.WatchStates.IDLE) {
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "Ignoring sendLcdIdle as not in idle");
 			return;
 		}
 		
-		updateWidgetPages(context);
+		updateWidgetPages(context, refresh);
+		
 		final int mode = currentPage==mediaPlayerPage ? MetaWatchService.WatchBuffers.APPLICATION : MetaWatchService.WatchBuffers.IDLE;
 		
 		Protocol.sendLcdBitmap(createLcdIdle(context), mode);
@@ -331,19 +339,18 @@ public class Idle {
 		Protocol.updateDisplay(mode);
 	}
 	
-	private static synchronized void sendOledIdle(Context context) {
-		if(MetaWatchService.watchState != MetaWatchService.WatchStates.IDLE) {
-			if (Preferences.logging) Log.d(MetaWatch.TAG, "Ignoring sendLcdIdle as not in idle");
-			return;
-		}
-		
-		updateWidgetPages(context);
-		
-		for (int i=0;i<4;++i) {
-			//Protocol.sendOledBitmap(createOledIdle(context, false, i), MetaWatchService.WatchBuffers.IDLE, i);
-		}
-			
-	}
+//	private static synchronized void sendOledIdle(Context context, boolean refresh) {
+//		if(MetaWatchService.watchState != MetaWatchService.WatchStates.IDLE) {
+//			if (Preferences.logging) Log.d(MetaWatch.TAG, "Ignoring sendLcdIdle as not in idle");
+//			return;
+//		}
+//		
+//		updateWidgetPages(context, refresh);
+//		
+//		for (int i=0;i<4;++i) {
+//			Protocol.sendOledBitmap(createOledIdle(context, false, i), MetaWatchService.WatchBuffers.IDLE, i);
+//		}	
+//	}
 	
 	public static boolean toIdle(Context context) {
 		
@@ -351,7 +358,7 @@ public class Idle {
 		MetaWatchService.watchState = MetaWatchService.WatchStates.IDLE;
 		
 		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
-			sendLcdIdle(context);
+			sendLcdIdle(context, true);
 				
 			if (numPages()>1) {
 				Protocol.enableButton(0, 0, IDLE_NEXT_PAGE, 0); // Right top immediate
@@ -360,18 +367,46 @@ public class Idle {
 		
 		}
 		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
-			sendOledIdle(context);
+			Protocol.enableButton(1, 0, IDLE_OLED_DISPLAY, 0); // Middle immediate
+
+			//Protocol.enableButton(1, 1, IDLE_OLED_TEMP1, 0); // Middle release
+			//Protocol.enableButton(1, 2, IDLE_NEXT_PAGE, 0); // Middle short hold
+			//Protocol.enableButton(1, 3, IDLE_OLED_TEMP3, 0); // Middle long hold
+			
+			//sendOledIdle(context, true);
 		}
 
 		return true;
 	}
 	
-	public static void updateLcdIdle(Context context) {
+	public static void updateIdle(Context context, boolean refresh) {
 		if (MetaWatchService.watchState == MetaWatchService.WatchStates.IDLE )
 			if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
-				sendLcdIdle(context);
-			else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
-				sendOledIdle(context);
+				sendLcdIdle(context, refresh);
+			//else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
+			//	sendOledIdle(context, refresh);
+	}
+	
+	// Send oled widgets view as a notification (until I can work out how to get the proper idle to work)
+	public static void oledWidgetNotification(Context context) {
+		Idle.updateWidgetPages(context, true);
+				
+		// get the 32px full screen
+		Bitmap bmpPage = Idle.createOledIdle(context, false, currentPage);
+		
+		// Split into top/bottom, and send
+		for(int i=0; i<2; ++i) {
+			Bitmap bitmap = Bitmap.createBitmap(80, 16, Bitmap.Config.RGB_565);
+			Canvas canvas = new Canvas(bitmap);
+			canvas.drawBitmap(bmpPage, 0, -(i*16), null);
+			Protocol.sendOledBitmap(bitmap, MetaWatchService.WatchBuffers.NOTIFICATION, i);
+		}
+					
+	}
+	
+	public static void oledTest(Context context, String msg) {
+		VibratePattern vibratePattern = new VibratePattern(false, 0, 0, 1);
+		Notification.addOledNotification(context, Protocol.createOled1line(context, null, "Testing"), Protocol.createOled1line(context, null, msg), null, 0, vibratePattern);
 	}
 	
 }

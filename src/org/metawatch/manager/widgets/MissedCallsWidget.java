@@ -17,8 +17,8 @@ public class MissedCallsWidget implements InternalWidget {
 	public final static String id_0 = "missedCalls_24_32";
 	final static String desc_0 = "Missed Calls (24x32)";
 	
-	public final static String id_1 = "missedCalls_19_16";
-	final static String desc_1 = "Missed Calls (19x16)";
+	public final static String id_1 = "missedCalls_16_16";
+	final static String desc_1 = "Missed Calls (16x16)";
 	
 	private Context context;
 	private TextPaint paintSmall;
@@ -72,7 +72,7 @@ public class MissedCallsWidget implements InternalWidget {
 		else if( widget_id == id_1 ) {
 			widget.id = id_1;
 			widget.description = desc_1;
-			widget.width = 19;
+			widget.width = 16;
 			widget.height = 16;
 			iconFile = "idle_call_10.bmp";
 		}

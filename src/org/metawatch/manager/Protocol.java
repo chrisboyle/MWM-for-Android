@@ -39,6 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.metawatch.manager.MetaWatchService.ConnectionState;
 import org.metawatch.manager.MetaWatchService.Preferences;
+import org.metawatch.manager.MetaWatchService.WatchBuffers;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -230,7 +231,6 @@ public class Protocol {
 		idleShowClock = show;
 		
 	}
-
 	public static void enqueue(byte[] bytes) {
 
 		if (MetaWatchService.fakeWatch)
@@ -278,23 +278,16 @@ public class Protocol {
 			MetaWatchService.notifyClients();
 	}
 
-	public static void sendAdvanceHands() {
+	public static void sendAdvanceHands(int hour, int minute, int second) {
 		try {
 			if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.sendAdvanceHands()");
-			Date date = new Date();
-			Calendar calendar = Calendar.getInstance();
-			calendar.setTime(date);
-
-			int hour = calendar.get(Calendar.HOUR);
-			int minute = calendar.get(Calendar.MINUTE);
-			int second = calendar.get(Calendar.SECOND);
 
 			byte[] bytes = new byte[7];
 
 			bytes[0] = eMessageType.start;
-			bytes[1] = 9; // length
+			bytes[1] = (byte) (bytes.length+2); // length
 			bytes[2] = eMessageType.AdvanceWatchHandsMsg.msg; // advance watch hands
-			bytes[3] = 0x04; // complete
+			bytes[3] = 0x00; 
 
 			bytes[4] = (byte) hour;
 			bytes[5] = (byte) minute;
@@ -756,18 +749,6 @@ public class Protocol {
 		sendQueue.add(bytes);
 	}
 
-	public static void test(Context context) {
-		sendOledDisplay(createOled1line(context, null, "test abc 123"), true,
-				false);
-		sendOledDisplay(
-				createOled2lines(context, "second display", "second line 123"),
-				false, true);
-		byte[] display = new byte[800];
-		createOled2linesLong(context,
-				"long test text, long test text, long test text...", display);
-		sendOledBufferPart(display, 0, 80, true, true);
-	}
-
 	public static byte[] createOled1line(Context context, String icon,
 			String line) {
 		int offset = 0;
@@ -924,9 +905,50 @@ public class Protocol {
 		return (int) paint.measureText(line) - 79;
 	}
 
-	public static void sendOledDisplay(byte[] display, boolean top,
+	public static void sendOledBitmap(Bitmap bitmap, int bufferType, int page) {
+		if (bitmap==null) 
+			return;
+		
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.sendOledBitmap()");
+		
+		int pixelArray[] = new int[16 * 80];
+		bitmap.getPixels(pixelArray, 0, 80, 0, 0, 80, 16);
+
+		sendOledArray(pixelArray, bufferType, page);
+	}
+
+	static void sendOledArray(int[] pixelArray, int bufferType, int page) {
+		byte[] send = new byte[160];
+
+		for (int i = 0; i < 160; i++) {
+			boolean[] column = new boolean[8];
+			for (int j = 0; j < 8; j++) {
+				if (i < 80) {
+					if (pixelArray[80 * j + i] == Color.WHITE)
+						column[j] = false;
+					else
+						column[j] = true;
+				} else {
+					if (pixelArray[80 * 8 + 80 * j + i - 80] == Color.WHITE)
+						column[j] = false;
+					else
+						column[j] = true;
+				}
+			}
+			for (int j = 0; j < 8; j++) {
+				if (column[j])
+					send[i] += Math.pow(2, j);
+			}
+		}
+
+		sendOledBuffer(send, bufferType, page, false);
+	}
+
+//	static boolean SendOledBuffer(byte[] buffer, int bufferType) {
+	
+	public static void sendOledBuffer(byte[] display, int bufferType, int page,
 			boolean scroll) {
-		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.sendOledDisplay()");
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.sendOledBuffer()");
 		try {
 
 			byte[] bytes;
@@ -936,15 +958,13 @@ public class Protocol {
 				bytes[0] = eMessageType.start;
 				bytes[1] = (byte) (bytes.length+2); // length
 				bytes[2] = eMessageType.OledWriteBufferMsg.msg; // oled write
-				if (scroll)				
+				if (scroll && bufferType == WatchBuffers.NOTIFICATION)				
 					bytes[3] = (byte) 0x82; // notification + scroll
 				else
-					bytes[3] = 0x02; // notification
+					bytes[3] = (byte) bufferType; // notification
 
-				if (top)
-					bytes[4] = 0x00; // top page
-				else
-					bytes[4] = 0x01; // bottom page
+				bytes[4] = (byte) page;
+
 				bytes[5] = (byte) a; // row
 				bytes[6] = 0x14; // size
 
@@ -953,10 +973,11 @@ public class Protocol {
 				enqueue(bytes);
 			}
 
-			updateOledNotification(top, scroll);
+			if( bufferType == WatchBuffers.NOTIFICATION )
+				updateOledNotification(page==0, scroll);
 
 		} catch (Exception x) {
-			if (Preferences.logging) Log.e(MetaWatch.TAG, "Protocol.sendOledDisplay(): exception occured", x);
+			if (Preferences.logging) Log.e(MetaWatch.TAG, "Protocol.sendOledBuffer(): exception occured", x);
 		}
 	}
 

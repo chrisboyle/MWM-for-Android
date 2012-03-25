@@ -32,6 +32,8 @@
     <PreferenceCategory android:title="Time">
     	<Preference android:key="set_rtc" android:title="Set RTC (LCD/OLED)"/>
     	<Preference android:key="time_24hr" android:title="Set time / date formats (LCD)" android:summary="Set the watch's date and time formats to watch your phone.  Note that this may cause the watch to crash on pre 0.9 versions of the firmware."/>
+		<Preference android:key="time_hands_1200" android:title="Calibrate hands to 12:00 (OLED)" android:summary="Advance hands to near 12:00."/>
+		<Preference android:key="time_hands_set" android:title="Auto set hands from 12:00 (OLED)" android:summary="Run the above option, manually set the hands to exactly 12:00, then select this one."/>
     </PreferenceCategory>
     
     <PreferenceCategory android:title="Media Control">

@@ -147,7 +147,7 @@ class CallStateListener extends PhoneStateListener {
 		}
 		if (label != Monitors.SignalData.phoneDataType) {
 			Monitors.SignalData.phoneDataType = label;
-			Idle.updateLcdIdle(context);
+			Idle.updateIdle(context, true);
 		}
 
 	}
@@ -204,7 +204,7 @@ class CallStateListener extends PhoneStateListener {
 				|| roaming != Monitors.SignalData.roaming) {
 			Monitors.SignalData.phoneBars = iconLevel;
 			Monitors.SignalData.roaming = roaming;
-			Idle.updateLcdIdle(context);
+			Idle.updateIdle(context, true);
 		}
 	}
 

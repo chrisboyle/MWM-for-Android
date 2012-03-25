@@ -233,6 +233,10 @@ public class Utils {
 			long currentremaintime;
 			long begintemp=0;
 			long elapsedtimetemp=0;
+			long mintime=(long)(1000*60*1.2);
+			if (!Preferences.readCalendarDuringMeeting) {
+				mintime=-1000*60; // to have some safety margin in case the meeting is just starting
+			}
 
 			currentremaintime=0;
 			//location="nowhere";
@@ -257,7 +261,7 @@ public class Utils {
 			// For a full list of available columns see http://tinyurl.com/yfbg76w
 			MeetingTime="None";
 			while (eventCursor.moveToNext()) {
-				if ((eventCursor.getLong(1) > (CurrentTime+(1000*60*1.2))) &&(eventCursor.getString(3).equals("0"))){
+				if ((eventCursor.getLong(1) > (CurrentTime+mintime)) &&(eventCursor.getString(3).equals("0"))){
 					String uid2 = eventCursor.getString(0);	
 					Uri CALENDAR_URI = Uri.parse("content://com.android.calendar/events/" + uid2);
 					//if (Preferences.logging) Log.d(MetaWatch.TAG,"CalendarService.GetData(): Calendar URI: "+ CALENDAR_URI);
@@ -644,7 +648,12 @@ public class Utils {
 	}
 	
 	public static Bitmap DrawIconCountWidget(Context context, int width, int height, Bitmap icon, int count, TextPaint textPaint) {
-		return DrawIconStringWidget(context,width,height,icon,Integer.toString(count),textPaint);
+		String text;
+		if(height==16 && count>1999)
+			text="999+";
+		else
+			text = Integer.toString(count);
+		return DrawIconStringWidget(context,width,height,icon,text,textPaint);
 	}
 
 	public static Bitmap DrawIconStringWidget(Context context, int width, int height, Bitmap icon, String text, TextPaint textPaint) {
@@ -653,8 +662,8 @@ public class Utils {
 		canvas.drawColor(Color.WHITE);
 		
 		if(height==16) {
-			canvas.drawBitmap(icon, 4, 0, null);
-			canvas.drawText(text, 10, 15, textPaint);
+			canvas.drawBitmap(icon, 2, 0, null);
+			canvas.drawText(text, 8, 15, textPaint);
 		}
 		else if(height==32) {
 			canvas.drawBitmap(icon, 0, 3, null);
@@ -848,6 +857,16 @@ public class Utils {
 		} 
 		
 		return folder;
+	}
+	
+	public static void invertBitmap(Bitmap bitmap) {
+		int size = bitmap.getWidth() * bitmap.getHeight();
+		int pixelArray[] = new int[size];
+		bitmap.getPixels(pixelArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+		for(int i=0; i<size; ++i) {
+			pixelArray[i] = 0xFFFFFF - pixelArray[i];
+		}
+		bitmap.setPixels(pixelArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 	}
 
 }

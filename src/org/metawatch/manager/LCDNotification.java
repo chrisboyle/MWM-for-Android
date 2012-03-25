@@ -95,7 +95,7 @@ public class LCDNotification {
 					"MetaWatchAccessibilityService.onAccessibilityEvent(): Adding notification for "+packageName);
 			l.addFirst(new LCDNotification(packageName, b, s, big));
 		}
-		Idle.updateLcdIdle(context);
+		Idle.updateIdle(context, true);
 		MetaWatchService.notifyClients();
 	}
 
@@ -111,7 +111,7 @@ public class LCDNotification {
 				if (li.next().packageName.equals(packageName)) {
 					li.remove();
 					if (notify) {
-						Idle.updateLcdIdle(context);
+						Idle.updateIdle(context, true);
 						MetaWatchService.notifyClients();
 					}
 					break;

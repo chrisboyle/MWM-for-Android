@@ -123,19 +123,14 @@ public class MetaWatch extends TabActivity {
                 .setContent(new Intent(this, Settings.class)));
         
         tabHost.addTab(tabHost.newTabSpec("tab3")
+        		.setIndicator("destroy")
                 .setIndicator("Widgets",res.getDrawable(R.drawable.ic_tab_widgets))
-                .setContent(new Intent(this, WidgetSetup.class)));
+                .setContent(new Intent(this, WidgetSetup.class)
+                		.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)));
         
         tabHost.addTab(tabHost.newTabSpec("tab4")
                 .setIndicator("Tests",res.getDrawable(R.drawable.ic_tab_test))
                 .setContent(new Intent(this, Test.class)));
-        
-        // This tab sets the intent flag so that it is recreated each time
-        // the tab is clicked.
-        //tabHost.addTab(tabHost.newTabSpec("tab3")
-        //        .setIndicator("destroy")
-        //        .setContent(new Intent(this, Controls2.class)
-        //                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)));
         
         synchronized (MetaWatchStatus.textView) {
         	if (MetaWatchStatus.textView==null) {

@@ -17,8 +17,8 @@ public class K9Widget implements InternalWidget {
 	public final static String id_0 = "unreadK9_24_32";
 	final static String desc_0 = "Unread K9 email (24x32)";
 
-	public final static String id_1 = "unreadK9_19_16";
-	final static String desc_1 = "Unread K9 email (19x16)";
+	public final static String id_1 = "unreadK9_16_16";
+	final static String desc_1 = "Unread K9 email (16x16)";
 	
 	private Context context;
 	private TextPaint paintSmall;
@@ -72,7 +72,7 @@ public class K9Widget implements InternalWidget {
 		else if( widget_id == id_1 ) {
 			widget.id = id_1;
 			widget.description = desc_1;
-			widget.width = 19;
+			widget.width = 16;
 			widget.height = 16;
 			iconFile = "idle_k9mail_10.bmp";
 		}

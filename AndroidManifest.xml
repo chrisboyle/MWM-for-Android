@@ -129,6 +129,7 @@
         <receiver android:name=".ApiIntentReceiver"> 
             <intent-filter>
             	<action android:name="org.metawatch.manager.APPLICATION_UPDATE" />  
+            	<action android:name="org.metawatch.manager.WIDGET_UPDATE" />
             	<action android:name="org.metawatch.manager.APPLICATION_START"/>
             	<action android:name="org.metawatch.manager.APPLICATION_STOP"/>
             	<action android:name="org.metawatch.manager.IDLE_BUTTONS_OVERRIDE"/>

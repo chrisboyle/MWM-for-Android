@@ -41,6 +41,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.metawatch.manager.Notification.VibratePattern;
+import org.metawatch.manager.widgets.WidgetManager;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
@@ -297,12 +298,31 @@ public class MetaWatchService extends Service {
 		editor.commit();
 	}
 	
+	public static String getWidgets(Context context) {
+		SharedPreferences sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(context);
+		
+		if(watchType == WatchType.DIGITAL) {
+			return sharedPreferences.getString("widgets", WidgetManager.defaultWidgetsDigital);
+		}
+		else if(watchType == WatchType.ANALOG) {
+			return sharedPreferences.getString("widgetsAnalog", WidgetManager.defaultWidgetsAnalog);
+		}
+		
+		return "";
+	}
+	
 	public static void saveWidgets(Context context, String widgets) {
 		SharedPreferences sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(context);
 		Editor editor = sharedPreferences.edit();
 
-		editor.putString("widgets", widgets);
+		if(watchType == WatchType.ANALOG) {
+			editor.putString("widgetsAnalog", widgets);
+		}
+		else {	
+			editor.putString("widgets", widgets);
+		}
 		editor.commit();
 	}
 	
@@ -400,7 +420,7 @@ public class MetaWatchService extends Service {
 		
 		Monitors.start(this, telephonyManager);
 
-		Idle.updateLcdIdle(context);
+		Idle.updateIdle(context, true);
 
 		start();
 
@@ -495,11 +515,6 @@ public class MetaWatchService extends Service {
 			
 			SharedPreferences sharedPreferences = PreferenceManager
 					.getDefaultSharedPreferences(context);
-			
-			boolean displaySplash = sharedPreferences.getBoolean("DisplaySplashScreen", true);
-			if (displaySplash) {
-				Notification.addBitmapNotification(this, Utils.loadBitmapFromAssets(context, "splash.png"), new VibratePattern(false, 0, 0, 0), 10000);
-			}
 			
 			/* Notify watch on connection if requested. */
 			boolean notifyOnConnect = sharedPreferences.getBoolean("NotifyWatchOnConnect", false);
@@ -756,6 +771,15 @@ public class MetaWatchService extends Service {
 							"MetaWatchService.readFromDevice(): device type response; analog watch");
 
 					Idle.toIdle(this);
+					Idle.updateIdle(this, true);
+					
+					SharedPreferences sharedPreferences = PreferenceManager
+							.getDefaultSharedPreferences(context);
+					boolean displaySplash = sharedPreferences.getBoolean("DisplaySplashScreen", true);
+					if (displaySplash) {
+						Protocol.sendOledBitmap(Utils.loadBitmapFromAssets(context, "splash_16_0.bmp"), MetaWatchService.WatchBuffers.NOTIFICATION, 0);
+						Protocol.sendOledBitmap(Utils.loadBitmapFromAssets(context, "splash_16_1.bmp"), MetaWatchService.WatchBuffers.NOTIFICATION, 1);
+					}
 
 				} else {
 					watchType = WatchType.DIGITAL;
@@ -764,8 +788,16 @@ public class MetaWatchService extends Service {
 
 					Protocol.configureMode();
 					Idle.toIdle(this);
-					Idle.updateLcdIdle(this);
+					Idle.updateIdle(this, true);
 
+					SharedPreferences sharedPreferences = PreferenceManager
+							.getDefaultSharedPreferences(context);
+					boolean displaySplash = sharedPreferences.getBoolean("DisplaySplashScreen", true);
+					if (displaySplash) {
+						Notification.addBitmapNotification(this, Utils.loadBitmapFromAssets(context, "splash.png"), new VibratePattern(false, 0, 0, 0), 10000);
+					}
+
+					
 					Protocol.queryNvalTime();
 
 				}
@@ -865,6 +897,7 @@ public class MetaWatchService extends Service {
 		}
 	}
 
+	static long lastOledCrownPress = 0;
 	void pressedButton(byte button) {
 		if (Preferences.logging) Log.d(MetaWatch.TAG, "button code: " + Byte.toString(button));
 		
@@ -907,9 +940,24 @@ public class MetaWatchService extends Service {
 				break;
 				
 			case Idle.IDLE_NEXT_PAGE:
-				Idle.nextPage();
-				Idle.updateLcdIdle(this);
+								
+				if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
+					Idle.nextPage();
+					Idle.updateIdle(this, true);	
+				}
+
 				break;
+				
+			case Idle.IDLE_OLED_DISPLAY:
+				long time = System.currentTimeMillis();
+				
+				if(time-lastOledCrownPress < 1000*5)
+					Idle.nextPage();
+				
+				lastOledCrownPress = time;
+				Idle.oledWidgetNotification(this);
+				break;
+						
 				
 			case Call.CALL_SPEAKER:
 				MediaControl.ToggleSpeakerphone(audioManager);

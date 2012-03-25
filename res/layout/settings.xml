@@ -299,7 +299,20 @@
 			android:summary="(Receiving these at all requires patched Android)"
 			android:defaultValue="true"
 			/>
-		<CheckBoxPreference
+
+	</PreferenceScreen>	
+	
+	<PreferenceScreen
+	    android:title="Widgets"
+	    >
+	    
+	    <Preference
+			android:title="Reset Widgets"
+			android:key="ResetWidgets"
+			android:summary="Reset widgets to default layout"
+			/>
+	    
+	    <CheckBoxPreference
 			android:title="@string/settings_Display_widget_row_separator"
 			android:key="DisplayWidgetRowSeparator"
 			android:summary="@string/settings_Display_widget_row_separator_desc"
@@ -317,7 +330,8 @@
 			android:summary="@string/settings_Overlay_weather_text_desc"
 			android:defaultValue="true"
 			/>
-	</PreferenceScreen>	
+	    
+	</PreferenceScreen>
 	
 	<PreferenceScreen
 	    android:title="Weather"

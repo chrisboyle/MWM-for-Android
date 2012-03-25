@@ -33,6 +33,8 @@
 package org.metawatch.manager;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
@@ -152,7 +154,7 @@ public class Test extends PreferenceActivity {
        
 		preferenceScreen.findPreference("k9").setOnPreferenceClickListener(new OnPreferenceClickListener() {	
 			public boolean onPreferenceClick(Preference arg0) {
-			   	NotificationBuilder.createK9(context, "The Doctor <doctor@gallifrey.net>", "Now drop your weapons, or I'll kill him with context deadly jelly baby!", "tardis:INBOX");
+			   	NotificationBuilder.createK9(context, "The Doctor <doctor@gallifrey.net>", "Now drop your weapons, or I'll kill him with this deadly jelly baby!", "tardis:INBOX");
 			   	return true;
 			}
 		});
@@ -282,6 +284,8 @@ public class Test extends PreferenceActivity {
 		    	
 		    	//Protocol.stopProtocolSender();
 				
+				Idle.oledWidgetNotification(context);
+				
 		    	return true;		    	
 			}
 		});
@@ -344,6 +348,40 @@ public class Test extends PreferenceActivity {
 			public boolean onPreferenceClick(Preference arg0) {
 				Protocol.setTimeDateFormat(context);
 			   	NotificationBuilder.createOtherNotification(context, "Time and date", "Formats updated.", null);
+		    	return true;
+			}
+		});
+		
+		preferenceScreen.findPreference("time_hands_1200").setOnPreferenceClickListener(new OnPreferenceClickListener() {	
+			public boolean onPreferenceClick(Preference arg0) {
+
+				Date date = new Date();
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(date);
+
+				int hour = 12-(calendar.get(Calendar.HOUR) % 12);
+				int minute = 60-(calendar.get(Calendar.MINUTE));
+				int second = 60-(calendar.get(Calendar.SECOND));
+				
+				Protocol.sendAdvanceHands(hour, minute, second);
+				
+		    	return true;
+			}
+		});
+	
+		preferenceScreen.findPreference("time_hands_set").setOnPreferenceClickListener(new OnPreferenceClickListener() {	
+			public boolean onPreferenceClick(Preference arg0) {
+
+				Date date = new Date();
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(date);
+
+				int hour = calendar.get(Calendar.HOUR);
+				int minute = calendar.get(Calendar.MINUTE);
+				int second = calendar.get(Calendar.SECOND);
+				
+				Protocol.sendAdvanceHands(hour, minute, second);
+				
 		    	return true;
 			}
 		});

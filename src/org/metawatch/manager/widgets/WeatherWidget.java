@@ -341,11 +341,13 @@ public class WeatherWidget implements InternalWidget {
 		
 		paintSmall.setTextAlign(Paint.Align.CENTER);
 		
+		final boolean shouldInvert = Preferences.invertLCD || (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG);
+		
 		if (WeatherData.received && WeatherData.ageOfMoon!=-1) {
 			int moonPhase = WeatherData.ageOfMoon;
 			int moonImage = phaseImage[moonPhase];
 			int x = 0-(moonImage*24);
-			Bitmap image = Preferences.invertLCD ? Utils.loadBitmapFromAssets(context, "moon-inv.bmp") : Utils.loadBitmapFromAssets(context, "moon.bmp");
+			Bitmap image = shouldInvert ? Utils.loadBitmapFromAssets(context, "moon-inv.bmp") : Utils.loadBitmapFromAssets(context, "moon.bmp");
 			canvas.drawBitmap(image, x, 0, null);
 			
 			canvas.drawText(Integer.toString(WeatherData.moonPercentIlluminated)+"%", 12, 30, paintSmall);
@@ -366,8 +368,9 @@ public class WeatherWidget implements InternalWidget {
 		if (WeatherData.received) {
 			
 			// icon
-			Bitmap image = Utils.loadBitmapFromAssets(context, WeatherData.icon);	
-			canvas.drawBitmap(image, 28, -4, null);
+			String smallIcon = WeatherData.icon.replace(".bmp", "_12.bmp");
+			Bitmap image = Utils.loadBitmapFromAssets(context, smallIcon);	
+			canvas.drawBitmap(image, 46, 2, null);
 			
 			// condition
 			Utils.drawWrappedOutlinedText(WeatherData.condition, canvas, 0, 0, 60, paintSmall, paintSmallOutline, Layout.Alignment.ALIGN_NORMAL);
@@ -375,6 +378,7 @@ public class WeatherWidget implements InternalWidget {
 			// temperatures
 			
 			paintSmall.setTextAlign(Paint.Align.RIGHT);
+			paintSmallOutline.setTextAlign(Paint.Align.RIGHT);
 						
 			StringBuilder string = new StringBuilder();
 			string.append(WeatherData.temp);
@@ -385,7 +389,7 @@ public class WeatherWidget implements InternalWidget {
 			else {
 				string.append("°F");
 			}
-			canvas.drawText(string.toString(), 80, 5, paintSmall);
+			Utils.drawOutlinedText(string.toString(), canvas, 80, 5, paintSmall, paintSmallOutline);
 			
 			if (WeatherData.forecast!=null) {
 				string = new StringBuilder();
@@ -393,9 +397,10 @@ public class WeatherWidget implements InternalWidget {
 				string.append("/");
 				string.append(WeatherData.forecast[0].tempLow);
 						
-				canvas.drawText(string.toString(), 80, 16, paintSmall);
+				Utils.drawOutlinedText(string.toString(), canvas, 80, 16, paintSmall, paintSmallOutline);
 			}
 			paintSmall.setTextAlign(Paint.Align.LEFT);
+			paintSmallOutline.setTextAlign(Paint.Align.LEFT);
 			
 			Utils.drawOutlinedText((String) TextUtils.ellipsize(WeatherData.locationName, paintSmall, 47, TruncateAt.END), canvas, 0, 16, paintSmall, paintSmallOutline);
 						
@@ -422,13 +427,15 @@ public class WeatherWidget implements InternalWidget {
 		Bitmap bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.RGB_565);
 		Canvas canvas = new Canvas(bitmap);
 		canvas.drawColor(Color.WHITE);
+
+		final boolean shouldInvert = Preferences.invertLCD || (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG);
 		
 		paintSmall.setTextAlign(Paint.Align.CENTER);
 		if (WeatherData.received && WeatherData.ageOfMoon!=-1) {
 			int moonPhase = WeatherData.ageOfMoon;
 			int moonImage = phaseImage[moonPhase];
 			int x = 0-(moonImage*16);
-			Bitmap image = Preferences.invertLCD ? Utils.loadBitmapFromAssets(context, "moon-inv_10.bmp") : Utils.loadBitmapFromAssets(context, "moon_10.bmp");
+			Bitmap image = shouldInvert ? Utils.loadBitmapFromAssets(context, "moon-inv_10.bmp") : Utils.loadBitmapFromAssets(context, "moon_10.bmp");
 			canvas.drawBitmap(image, x, 0, null);
 		} else {
 			canvas.drawText("--", 8, 9, paintSmall);

@@ -32,6 +32,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
+import org.metawatch.manager.MetaWatchService.WatchBuffers;
 import org.metawatch.manager.MetaWatchService.WatchType;
 
 import android.content.Context;
@@ -111,10 +112,10 @@ public class Notification {
 
 					} else {
 
-						Protocol.sendOledDisplay(notification.oledTop, true,
+						Protocol.sendOledBuffer(notification.oledTop, WatchBuffers.NOTIFICATION, 0,
 								false);
-						Protocol.sendOledDisplay(notification.oledBottom,
-								false, false);
+						Protocol.sendOledBuffer(notification.oledBottom, WatchBuffers.NOTIFICATION, 1,
+								false);
 
 						if (notification.vibratePattern.vibrate)
 							Protocol.vibrate(notification.vibratePattern.on,
