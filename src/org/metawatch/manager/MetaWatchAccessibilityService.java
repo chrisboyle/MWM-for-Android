@@ -186,11 +186,14 @@ public class MetaWatchAccessibilityService extends AccessibilityService {
 								subject = subject.substring(colonPos + 2);
 							}
 							NotificationBuilder.createSmart(this, title,
-									subject, icon, null);
+									subject, icon, NotificationBuilder.createVibratePatternFromPreference(
+											this, "settingsGmailNumberBuzzes"));
 						} else {
 							NotificationBuilder.createSmart(this,
 									l.get(firstNotTicker+1).toString(),
-									l.get(firstNotTicker).toString(), icon, null);
+									l.get(firstNotTicker).toString(), icon,
+									NotificationBuilder.createVibratePatternFromPreference(
+											this, "settingsGmailNumberBuzzes"));
 						}
 					}
 				}
