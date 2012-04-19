@@ -18,6 +18,13 @@
 			android:summary="Enter watch MAC address manually"
 			android:defaultValue=""
 			/>
+							
+		<CheckBoxPreference
+			android:title="Show fake watches"
+			android:key="ShowFakeWatches"
+			android:summary="Show fake watch entries in the discovery screen, to emulate connection to an analog or digital watch, without actually connecting."
+			android:defaultValue="false"
+			/>	
 	</PreferenceScreen>
     
 	<PreferenceScreen
@@ -270,23 +277,6 @@
 			android:defaultValue="120"
 			/>
 
-
-		<CheckBoxPreference
-			android:title="Music Controls"
-			android:key="IdleMusicControls"
-			android:summary="Music control screen available (via top-right button)"
-			android:defaultValue="false"
-			/>
-		<ListPreference 
-			android:entries="@array/settings_media_control_method_names" 
-			android:entryValues="@array/settings_media_control_method_values" 
-			android:dialogTitle="Media Control Method" 
-			android:key="IdleMusicControlMethod" 
-			android:title="Media Control Method" 
-			android:negativeButtonText="Cancel" 
- 			android:enabled="true" 
- 			android:defaultValue="0"
- 			/>	
 		<CheckBoxPreference
 			android:title="Invert LCD"
 			android:key="InvertLCD"
@@ -303,7 +293,7 @@
 	</PreferenceScreen>	
 	
 	<PreferenceScreen
-	    android:title="Widgets"
+	    android:title="Watch Widgets"
 	    >
 	    
 	    <Preference
@@ -331,6 +321,29 @@
 			android:defaultValue="true"
 			/>
 	    
+	</PreferenceScreen>
+	
+	<PreferenceScreen
+	    android:title="Watch Apps"
+	    >
+
+		<CheckBoxPreference
+			android:title="Music Controls"
+			android:key="IdleMusicControls"
+			android:summary="Music control screen available (via top-right button on Digital, or crown button on Analog)"
+			android:defaultValue="false"
+			/>
+		<ListPreference 
+			android:entries="@array/settings_media_control_method_names" 
+			android:entryValues="@array/settings_media_control_method_values" 
+			android:dialogTitle="Media Control Method" 
+			android:key="IdleMusicControlMethod" 
+			android:title="Media Control Method" 
+			android:negativeButtonText="Cancel" 
+ 			android:enabled="true" 
+ 			android:defaultValue="0"
+ 			/>	
+	    			    
 	</PreferenceScreen>
 	
 	<PreferenceScreen

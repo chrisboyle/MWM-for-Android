@@ -293,7 +293,8 @@ public class Protocol {
 			bytes[5] = (byte) minute;
 			bytes[6] = (byte) second;
 
-			// send(bytes);
+			enqueue(bytes);
+			
 		} catch (Exception x) {
 		}
 	}
@@ -406,14 +407,26 @@ public class Protocol {
 		enqueue(bytes);
 	}
 
-	public static void updateDisplay(int bufferType) {
-		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.updateDisplay(): bufferType="+bufferType);
+	public static void updateLcdDisplay(int bufferType) {
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.updateLcdDisplay(): bufferType="+bufferType);
 		byte[] bytes = new byte[4];
 
 		bytes[0] = eMessageType.start;
 		bytes[1] = (byte) (bytes.length+2); // length
 		bytes[2] = eMessageType.UpdateDisplay.msg; // update display
 		bytes[3] = (byte) (bufferType + 16);
+
+		enqueue(bytes);
+	}
+	
+	public static void oledChangeMode(int bufferType) {
+		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.OledChangeMode(): bufferType="+bufferType);
+		byte[] bytes = new byte[4];
+
+		bytes[0] = eMessageType.start;
+		bytes[1] = (byte) (bytes.length+2); // length
+		bytes[2] = eMessageType.OledChangeModeMsg.msg; // update display
+		bytes[3] = (byte) (bufferType);
 
 		enqueue(bytes);
 	}
@@ -521,35 +534,35 @@ public class Protocol {
 		enableButton(1, 0, NOTIFICATION_READER, 0);
 	}
 
-	public static void enableMediaButtons() {
-		if (Preferences.logging) Log.d(MetaWatch.TAG, "enableMediaButtons()");
+//	public static void enableMediaButtons() {
+//		if (Preferences.logging) Log.d(MetaWatch.TAG, "enableMediaButtons()");
+//
+//		enableButton(1, 0, MediaControl.TOGGLE, 1); // right middle - immediate
+//
+//		enableButton(5, 0, MediaControl.VOLUME_DOWN, 1); // left middle - press
+//		enableButton(5, 2, MediaControl.PREVIOUS, 1); // left middle - hold
+//		enableButton(5, 3, MediaControl.PREVIOUS, 1); // left middle - long hold
+//		
+//		enableButton(6, 0, MediaControl.VOLUME_UP, 1); // left top - press
+//		enableButton(6, 2, MediaControl.NEXT, 1); // left top - hold
+//		enableButton(6, 3, MediaControl.NEXT, 1); // left top - long hold
+//	}
 
-		enableButton(1, 0, MediaControl.TOGGLE, 1); // right middle - immediate
-
-		enableButton(5, 0, MediaControl.VOLUME_DOWN, 1); // left middle - press
-		enableButton(5, 2, MediaControl.PREVIOUS, 1); // left middle - hold
-		enableButton(5, 3, MediaControl.PREVIOUS, 1); // left middle - long hold
-		
-		enableButton(6, 0, MediaControl.VOLUME_UP, 1); // left top - press
-		enableButton(6, 2, MediaControl.NEXT, 1); // left top - hold
-		enableButton(6, 3, MediaControl.NEXT, 1); // left top - long hold
-	}
-
-	public static void disableMediaButtons() {
-		if (Preferences.logging) Log.d(MetaWatch.TAG, "disableMediaButtons()");
-		
-		disableButton(1, 0, 1);
-	
-		disableButton(5, 0, 1);
-		//disableButton(5, 1, 1);
-		disableButton(5, 2, 1);
-		disableButton(5, 3, 1);
-
-		disableButton(6, 0, 1);
-		//disableButton(6, 1, 1);
-		disableButton(6, 2, 1);
-		disableButton(6, 3, 1);
-	}
+//	public static void disableMediaButtons() {
+//		if (Preferences.logging) Log.d(MetaWatch.TAG, "disableMediaButtons()");
+//		
+//		disableButton(1, 0, 1);
+//	
+//		disableButton(5, 0, 1);
+//		//disableButton(5, 1, 1);
+//		disableButton(5, 2, 1);
+//		disableButton(5, 3, 1);
+//
+//		disableButton(6, 0, 1);
+//		//disableButton(6, 1, 1);
+//		disableButton(6, 2, 1);
+//		disableButton(6, 3, 1);
+//	}
 
 	public static void readButtonConfiguration() {
 		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.readButtonConfiguration()");
@@ -802,9 +815,6 @@ public class Protocol {
 	public static byte[] createOled2lines(Context context, String line1,
 			String line2) {
 		int offset = 0;
-		/*
-		 * if (logo) offset += 17;
-		 */
 
 		/* Convert newlines to spaces */
 		line1 = line1.replace('\n', ' ');
@@ -819,13 +829,6 @@ public class Protocol {
 		canvas.drawColor(Color.WHITE);
 		canvas.drawText(line1, offset, 7, paint);
 		canvas.drawText(line2, offset, 15, paint);
-
-		/*
-		 * if (logo) { Bitmap imageImmutable =
-		 * BitmapFactory.decodeResource(context.getResources(), iconType);
-		 * Bitmap imageIcon = imageImmutable.copy(Bitmap.Config.RGB_565, true);
-		 * canvas.drawBitmap(imageIcon, 0, 0, null); }
-		 */
 
 		int poleInt[] = new int[16 * 80];
 		image.getPixels(poleInt, 0, 80, 0, 0, 80, 16);
@@ -859,9 +862,6 @@ public class Protocol {
 	public static int createOled2linesLong(Context context, String line,
 			byte[] display) {
 		int offset = 0 - 79;
-		/*
-		 * if (logo) offset += 17;
-		 */
 
 		/* Replace newlines with spaces */
 		line = line.replace('\n', ' ');
@@ -876,13 +876,6 @@ public class Protocol {
 		paint.setTypeface(FontCache.instance(context).Small.face);
 		canvas.drawColor(Color.WHITE);
 		canvas.drawText(line, offset, 7, paint);
-
-		/*
-		 * if (logo) { Bitmap imageImmutable =
-		 * BitmapFactory.decodeResource(context.getResources(), iconType);
-		 * Bitmap imageIcon = imageImmutable.copy(Bitmap.Config.RGB_565, true);
-		 * canvas.drawBitmap(imageIcon, 0, 0, null); }
-		 */
 
 		int poleInt[] = new int[8 * width];
 		image.getPixels(poleInt, 0, width, 0, 0, width, 8);
@@ -900,7 +893,6 @@ public class Protocol {
 					display[i] += Math.pow(2, j);
 			}
 		}
-		// int len = (int) paint.measureText(line);
 
 		return (int) paint.measureText(line) - 79;
 	}
@@ -943,8 +935,6 @@ public class Protocol {
 
 		sendOledBuffer(send, bufferType, page, false);
 	}
-
-//	static boolean SendOledBuffer(byte[] buffer, int bufferType) {
 	
 	public static void sendOledBuffer(byte[] display, int bufferType, int page,
 			boolean scroll) {
@@ -973,25 +963,24 @@ public class Protocol {
 				enqueue(bytes);
 			}
 
-			if( bufferType == WatchBuffers.NOTIFICATION )
-				updateOledNotification(page==0, scroll);
+			updateOledDisplay(page==0, bufferType, scroll);
 
 		} catch (Exception x) {
 			if (Preferences.logging) Log.e(MetaWatch.TAG, "Protocol.sendOledBuffer(): exception occured", x);
 		}
 	}
 
-	public static void updateOledNotification(boolean top, boolean scroll) {
+	public static void updateOledDisplay(boolean top, int bufferType, boolean scroll) {
 		if (Preferences.logging) Log.d(MetaWatch.TAG, "Protocol.updateOledNotification(): top="+top+" scroll="+scroll);
 		byte[] bytes = new byte[7];
 
 		bytes[0] = eMessageType.start;
 		bytes[1] = (byte) (bytes.length+2); // length
 		bytes[2] = eMessageType.OledWriteBufferMsg.msg; // oled write
-		if (scroll)
+		if (scroll &&  bufferType == WatchBuffers.NOTIFICATION )
 			bytes[3] = (byte) 0xC2; // notification, activate, scroll
 		else
-			bytes[3] = 0x42; // notification, activate
+			bytes[3] = (byte) (0x40 + bufferType); // activate
 
 		if (top)
 			bytes[4] = 0x00; // top page
@@ -1004,8 +993,8 @@ public class Protocol {
 	}
 
 	public static void updateOledsNotification() {
-		updateOledNotification(true, false);
-		updateOledNotification(false, false);
+		updateOledDisplay(true, WatchBuffers.NOTIFICATION, false);
+		updateOledDisplay(false, WatchBuffers.NOTIFICATION, false);
 	}
 
 	public static void sendOledBuffer(boolean startScroll) {

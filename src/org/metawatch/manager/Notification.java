@@ -98,7 +98,7 @@ public class Notification {
 							continue;
 						}
 
-						Protocol.updateDisplay(2);
+						Protocol.updateLcdDisplay(2);
 
 						if (notification.vibratePattern.vibrate)
 							Protocol.vibrate(notification.vibratePattern.on,
@@ -222,7 +222,7 @@ public class Notification {
 							if (Preferences.logging) Log.d(MetaWatch.TAG,
 									"Displaying page " + currentNotificationPage +" / "+ notification.bitmaps.length );
 							
-							Protocol.updateDisplay(2);
+							Protocol.updateLcdDisplay(2);
 						} while (notifyButtonPress != NOTIFICATION_DISMISS);
 						
 						

@@ -41,6 +41,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.metawatch.manager.Notification.VibratePattern;
+import org.metawatch.manager.apps.MediaPlayerApp;
 import org.metawatch.manager.widgets.WidgetManager;
 
 import android.app.ActivityManager;
@@ -770,6 +771,7 @@ public class MetaWatchService extends Service {
 					if (Preferences.logging) Log.d(MetaWatch.TAG,
 							"MetaWatchService.readFromDevice(): device type response; analog watch");
 
+					Idle.enableIdleKeys();
 					Idle.toIdle(this);
 					Idle.updateIdle(this, true);
 					
@@ -787,6 +789,7 @@ public class MetaWatchService extends Service {
 							"MetaWatchService.readFromDevice(): device type response; digital watch");
 
 					Protocol.configureMode();
+					Idle.enableIdleKeys();
 					Idle.toIdle(this);
 					Idle.updateIdle(this, true);
 
@@ -796,10 +799,8 @@ public class MetaWatchService extends Service {
 					if (displaySplash) {
 						Notification.addBitmapNotification(this, Utils.loadBitmapFromAssets(context, "splash.png"), new VibratePattern(false, 0, 0, 0), 10000);
 					}
-
 					
 					Protocol.queryNvalTime();
-
 				}
 			}
 
@@ -812,22 +813,22 @@ public class MetaWatchService extends Service {
 							"MetaWatchService.readFromDevice(): music message");
 
 					switch (bytes[4]) {
-					case MediaControl.NEXT:
+					case MediaPlayerApp.NEXT:
 						MediaControl.next(context);
 						break;
-					case MediaControl.PREVIOUS:
+					case MediaPlayerApp.PREVIOUS:
 						MediaControl.previous(context);
 						break;
-					case MediaControl.TOGGLE:
+					case MediaPlayerApp.TOGGLE:
 						MediaControl.togglePause(context);
 						break;
-					case MediaControl.VOLUME_UP:
+					case MediaPlayerApp.VOLUME_UP:
 						MediaControl.volumeUp(audioManager);
 						break;
-					case MediaControl.VOLUME_DOWN:
+					case MediaPlayerApp.VOLUME_DOWN:
 						MediaControl.volumeDown(audioManager);
 						break;
-					case MediaControl.HEADSET:
+					case MediaPlayerApp.HEADSET:
 						MediaControl.headsetHook(context);
 						break;
 					}
@@ -863,7 +864,7 @@ public class MetaWatchService extends Service {
 				float lightSense = (((int) bytes[1] << 8) + (int) bytes[0]) / 1000.0f;
 				float lightAverage = (((int) bytes[3] << 8) + (int) bytes[2]) / 1000.0f;
 				if (Preferences.logging) Log.d(MetaWatch.TAG,
-						"MetaWatchService.readFromDevice(): received light sensore response."
+						"MetaWatchService.readFromDevice(): received light sensor response."
 								+ " light_sense=" + lightSense
 								+ " light_average=" + lightAverage);
 			
@@ -879,7 +880,6 @@ public class MetaWatchService extends Service {
 				broadcastConnection(false);
 			}
 		}
-
 	}
 
 	void broadcastConnection(boolean connected) {
@@ -909,22 +909,23 @@ public class MetaWatchService extends Service {
 		switch (watchState) {
 		case WatchStates.IDLE: {
 			switch (button) {
-			case MediaControl.VOLUME_UP:
+			
+			case MediaPlayerApp.VOLUME_UP:
 				MediaControl.volumeUp(audioManager);
 				break;
-			case MediaControl.VOLUME_DOWN:
+			case MediaPlayerApp.VOLUME_DOWN:
 				MediaControl.volumeDown(audioManager);
 				break;
-			case MediaControl.NEXT:
+			case MediaPlayerApp.NEXT:
 				MediaControl.next(this);
 				break;
-			case MediaControl.PREVIOUS:
+			case MediaPlayerApp.PREVIOUS:
 				MediaControl.previous(this);
 				break;
-			case MediaControl.TOGGLE:
+			case MediaPlayerApp.TOGGLE:
 				MediaControl.togglePause(this);
 				break;
-			case MediaControl.HEADSET:
+			case MediaPlayerApp.HEADSET:
 				MediaControl.headsetHook(context);
 				break;
 			case Protocol.REPLAY:
@@ -939,8 +940,7 @@ public class MetaWatchService extends Service {
 				Log.d(MetaWatch.TAG, "toggled notification reader");
 				break;
 				
-			case Idle.IDLE_NEXT_PAGE:
-								
+			case Idle.IDLE_NEXT_PAGE:							
 				if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL) {
 					Idle.nextPage();
 					Idle.updateIdle(this, true);	
@@ -952,21 +952,22 @@ public class MetaWatchService extends Service {
 				long time = System.currentTimeMillis();
 				
 				if(time-lastOledCrownPress < 1000*5)
+				{
 					Idle.nextPage();
+					Idle.updateIdle(this, true);
+				}
 				
 				lastOledCrownPress = time;
-				Idle.oledWidgetNotification(this);
+				Idle.sendOledIdle(this);
 				break;
 						
 				
 			case Call.CALL_SPEAKER:
 				MediaControl.ToggleSpeakerphone(audioManager);
-				break;
-				
+				break;			
 			case Call.CALL_ANSWER:
 				MediaControl.AnswerCall(context);
 				break;
-				
 			case Call.CALL_DISMISS:
 				MediaControl.DismissCall(context);
 				break;
@@ -974,9 +975,11 @@ public class MetaWatchService extends Service {
 			}
 		}
 			break;
+			
 		case WatchStates.APPLICATION:
 			broadcastButton(button, watchState);
 			break;
+			
 		case WatchStates.NOTIFICATION:
 			switch (button) {
 			case Notification.NOTIFICATION_UP:

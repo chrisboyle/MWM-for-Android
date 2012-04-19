@@ -248,7 +248,7 @@ public class Test extends PreferenceActivity {
 		preferenceScreen.findPreference("update_display").setOnPreferenceClickListener(new OnPreferenceClickListener() {	
 			public boolean onPreferenceClick(Preference arg0) {
 		    	if (MetaWatchService.watchType == WatchType.DIGITAL)
-		    		Protocol.updateDisplay(0);
+		    		Protocol.updateLcdDisplay(0);
 		    	return true;
 			}
 		});
@@ -284,7 +284,7 @@ public class Test extends PreferenceActivity {
 		    	
 		    	//Protocol.stopProtocolSender();
 				
-				Idle.oledWidgetNotification(context);
+				Idle.sendOledIdle(context);
 				
 		    	return true;		    	
 			}

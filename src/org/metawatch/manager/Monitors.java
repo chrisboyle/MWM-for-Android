@@ -482,9 +482,12 @@ public class Monitors {
 			if (Preferences.logging) Log.d(MetaWatch.TAG,
 					"Monitors.updateWeatherDataWunderground(): start");
 			
-			if (LocationData.received && Preferences.wundergroundKey != "") {
+			if ((LocationData.received || (Preferences.weatherGeolocation==false)) && Preferences.wundergroundKey != "") {
 				
-				String latLng = Double.toString(LocationData.latitude)+","+Double.toString(LocationData.longitude);
+				String weatherLocation = Double.toString(LocationData.latitude)+","+Double.toString(LocationData.longitude);
+				if (Preferences.weatherGeolocation==false)
+					weatherLocation = Preferences.weatherCity.replace(",", "").replace(" ", "%20");
+				
 				String forecastQuery = "";
 				boolean hasForecast = false;
 				
@@ -495,7 +498,9 @@ public class Monitors {
 					hasForecast = true;
 				}
 				
-				String requestUrl =  "http://api.wunderground.com/api/"+Preferences.wundergroundKey+"/geolookup/conditions/"+forecastQuery+"q/"+latLng+".json";
+				
+				
+				String requestUrl =  "http://api.wunderground.com/api/"+Preferences.wundergroundKey+"/geolookup/conditions/"+forecastQuery+"q/"+weatherLocation+".json";
 				
 				if (Preferences.logging) Log.d(MetaWatch.TAG,
 						"Request: "+requestUrl);

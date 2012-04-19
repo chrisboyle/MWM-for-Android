@@ -262,7 +262,7 @@ public class MetaWatch extends TabActivity {
 						"<img src=\"splash.png\">" +
 						"<p>Version " + Utils.getVersion(this) + ".</p>" +
 						"<p>Modified by Dobie Wollert, Chris Sewell, Prash D, Craig Oliver, Richard Munn, Matthias Gruenewald, Kyle Schroeder, Garth Bushell and Chris Boyle.</p>" +
-						"<p>© Copyright 2011-2012 Meta Watch Ltd.</p>" +
+						"<p>&copy; Copyright 2011-2012 Meta Watch Ltd.</p>" +
 						"</center></body></html>";
         webView.loadDataWithBaseURL("file:///android_asset/", html, "text/html", "utf-8", null);
         

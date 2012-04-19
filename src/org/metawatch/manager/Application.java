@@ -58,7 +58,7 @@ public class Application {
 				//Bitmap bitmap = createLcdApp(context);
 				Bitmap bitmap = Protocol.createTextBitmap(context, "Starting application mode ...");
 				Protocol.sendLcdBitmap(bitmap, MetaWatchService.WatchBuffers.APPLICATION);
-				Protocol.updateDisplay(MetaWatchService.WatchBuffers.APPLICATION);
+				Protocol.updateLcdDisplay(MetaWatchService.WatchBuffers.APPLICATION);
 			}
 		}		
 	}
@@ -74,7 +74,7 @@ public class Application {
 			
 			if (MetaWatchService.watchState == MetaWatchService.WatchStates.APPLICATION) {
 				Protocol.sendLcdBitmap(bitmap, MetaWatchService.WatchBuffers.APPLICATION);
-				Protocol.updateDisplay(MetaWatchService.WatchBuffers.APPLICATION);
+				Protocol.updateLcdDisplay(MetaWatchService.WatchBuffers.APPLICATION);
 			}
 		}		
 	}
@@ -90,7 +90,7 @@ public class Application {
 			
 			if (MetaWatchService.watchState == MetaWatchService.WatchStates.APPLICATION) {
 				Protocol.sendLcdArray(array, MetaWatchService.WatchBuffers.APPLICATION);
-				Protocol.updateDisplay(MetaWatchService.WatchBuffers.APPLICATION);
+				Protocol.updateLcdDisplay(MetaWatchService.WatchBuffers.APPLICATION);
 			}
 		}		
 	}
@@ -106,7 +106,7 @@ public class Application {
 			
 			if (MetaWatchService.watchState == MetaWatchService.WatchStates.APPLICATION) {
 				Protocol.sendLcdBuffer(buffer, MetaWatchService.WatchBuffers.APPLICATION);
-				Protocol.updateDisplay(MetaWatchService.WatchBuffers.APPLICATION);
+				Protocol.updateLcdDisplay(MetaWatchService.WatchBuffers.APPLICATION);
 			}
 		}		
 	}
@@ -116,7 +116,7 @@ public class Application {
 	public static void toApp() {
 		MetaWatchService.watchState = MetaWatchService.WatchStates.APPLICATION;
 		// update screen with cached buffer
-		Protocol.updateDisplay(MetaWatchService.WatchBuffers.APPLICATION);
+		Protocol.updateLcdDisplay(MetaWatchService.WatchBuffers.APPLICATION);
 	}
 	
 	public static void exitApp(Context context) {

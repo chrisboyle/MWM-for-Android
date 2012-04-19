@@ -31,8 +31,11 @@ public class CalendarWidget implements InternalWidget {
 	public final static String id_2 = "Calendar_16_16";
 	final static String desc_2 = "Next Calendar Appointment (16x16)";
 
-	public final static String id_3 = "Calendar_96_x";
-	final static String desc_3 = "Next Calendar Appointment (96x...)";
+	public final static String id_3 = "Calendar_80_16";
+	final static String desc_3 = "Next Calendar Appointment (80x16)";
+
+	public final static String id_4 = "Calendar_96_x";
+	final static String desc_4 = "Next Calendar Appointment (96x...)";
 
 	private Context context;
 	private TextPaint paintSmall;
@@ -40,8 +43,8 @@ public class CalendarWidget implements InternalWidget {
 	private TextPaint paintNumerals;
 
 	private String meetingTime = "None";
-	private String meetingTitle;
-	private String meetingLocation;
+	private String meetingTitle = "";
+	private String meetingLocation = "";
 	private long meetingStartTimestamp = 0;
 	private long meetingEndTimestamp = 0;
 
@@ -75,27 +78,37 @@ public class CalendarWidget implements InternalWidget {
 
 	public void refresh(ArrayList<CharSequence> widgetIds) {
 
-		boolean readCalendar = false;
-		long time = System.currentTimeMillis();
-		if ((time - lastRefresh > 5*60*1000) || (Monitors.calendarChanged)) {
-			readCalendar = true;
-			lastRefresh = System.currentTimeMillis();
-		}
-		if (!Preferences.readCalendarDuringMeeting) {
-			// Only update the current meeting if it is not ongoing
-			if ((time>=meetingStartTimestamp) && (time<meetingEndTimestamp-Preferences.readCalendarMinDurationToMeetingEnd*60*1000)) {
-				readCalendar = false;
+		// Run the refresh in its own thread, so as not to stall the main MWM process
+		
+		Thread thread = new Thread("CalendarWidget.refresh") {
+			@Override
+			public void run() {
+
+				boolean readCalendar = false;
+				long time = System.currentTimeMillis();
+				if ((time - lastRefresh > 5*60*1000) || (Monitors.calendarChanged)) {
+					readCalendar = true;
+					lastRefresh = System.currentTimeMillis();
+				}
+				if (!Preferences.readCalendarDuringMeeting) {
+					// Only update the current meeting if it is not ongoing
+					if ((time>=meetingStartTimestamp) && (time<meetingEndTimestamp-Preferences.readCalendarMinDurationToMeetingEnd*60*1000)) {
+						readCalendar = false;
+					}
+				}
+				if (readCalendar) {
+					if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() start");
+					meetingTime = Utils.readCalendar(context, 0);
+					meetingStartTimestamp = Utils.Meeting_StartTimestamp;
+					meetingEndTimestamp = Utils.Meeting_EndTimestamp;
+					meetingLocation = Utils.Meeting_Location;
+					meetingTitle = Utils.Meeting_Title;
+					if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() stop");   
+				}
+				
 			}
-		}
-		if (readCalendar) {
-			if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() start");
-			meetingTime = Utils.readCalendar(context, 0);
-			meetingStartTimestamp = Utils.Meeting_StartTimestamp;
-			meetingEndTimestamp = Utils.Meeting_EndTimestamp;
-			meetingLocation = Utils.Meeting_Location;
-			meetingTitle = Utils.Meeting_Title;
-			if (Preferences.logging) Log.d(MetaWatch.TAG, "CalendarWidget.refresh() stop");   
-		}
+		};
+		thread.start();
 	}
 
 	public void get(ArrayList<CharSequence> widgetIds, Map<String,WidgetData> result) {
@@ -111,9 +124,13 @@ public class CalendarWidget implements InternalWidget {
 		if(widgetIds == null || widgetIds.contains(id_2)) {		
 			result.put(id_2, GenWidget(id_2));
 		}
-
-		if(widgetIds == null || widgetIds.contains(id_3)) {
+		
+		if(widgetIds == null || widgetIds.contains(id_3)) {		
 			result.put(id_3, GenWidget(id_3));
+		}
+
+		if(widgetIds == null || widgetIds.contains(id_4)) {
+			result.put(id_4, GenWidget(id_4));
 		}
 	}
 
@@ -145,6 +162,13 @@ public class CalendarWidget implements InternalWidget {
 		else if (widget_id.equals(id_3)) {
 			widget.id = id_3;
 			widget.description = desc_3;
+			widget.width = 80;
+			widget.height = 16;
+			iconFile = "idle_calendar_10.bmp";
+		}
+		else if (widget_id.equals(id_4)) {
+			widget.id = id_4;
+			widget.description = desc_4;
 			widget.width = 96;
 			widget.height = 13;
 		}
@@ -155,7 +179,7 @@ public class CalendarWidget implements InternalWidget {
 		Canvas canvas = new Canvas(widget.bitmap);
 		canvas.drawColor(Color.WHITE);
 
-		if (widget_id.equals(id_3)) {
+		if (widget_id.equals(id_4)) {
 			paintSmall.setTextAlign(Align.LEFT);
 			canvas.drawText(meetingTime, 1, 6, paintSmall);
 
@@ -178,8 +202,11 @@ public class CalendarWidget implements InternalWidget {
 			canvas.drawBitmap(icon, 2, 0, null);
 			if(meetingTime.equals("None"))
 				canvas.drawText("-", 8, 15, paintSmallNumerals);
-			else
-				canvas.drawText(meetingTime, 8, 15, paintSmallNumerals);
+			else {
+				// Strip out colon to make it fit;
+				String time = meetingTime.replace(":", "");
+				canvas.drawText(time, 8, 15, paintSmallNumerals);
+			}
 		}
 		else {
 			canvas.drawBitmap(icon, 0, 3, null);
@@ -206,8 +233,6 @@ public class CalendarWidget implements InternalWidget {
 			canvas.drawText(meetingTime, 12, 30, paintSmall);
 		}
 		
-		
-
 		if (widget_id.equals(id_1)) {
 			paintSmall.setTextAlign(Align.LEFT);
 
@@ -228,6 +253,27 @@ public class CalendarWidget implements InternalWidget {
 
 			paintSmall.setTextAlign(Align.CENTER);
 		}
+		else if (widget_id.equals(id_3)) {
+			paintSmall.setTextAlign(Align.LEFT);
+
+			String text = meetingTitle;
+			if ((meetingLocation !=null) && (meetingLocation.length()>0))
+				text += " - " + meetingLocation;
+
+			canvas.save();			
+			StaticLayout layout = new StaticLayout(text, paintSmall, 64, Layout.Alignment.ALIGN_CENTER, 1.0f, 0, false);
+			int height = layout.getHeight();
+			int textY = 8 - (height/2);
+			if(textY<0) {
+				textY=0;
+			}
+			canvas.translate(16, textY); //position the text
+			layout.draw(canvas);
+			canvas.restore();	
+
+			paintSmall.setTextAlign(Align.CENTER);
+		}
+
 
 		return widget;
 	}

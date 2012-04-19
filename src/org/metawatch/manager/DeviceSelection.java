@@ -37,27 +37,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
@@ -70,7 +73,12 @@ public class DeviceSelection extends Activity {
 			if (intent.getAction().equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
 				if (Preferences.logging) Log.d(MetaWatch.TAG, "discovery finished");
 				
-				pdWait.dismiss();
+				ProgressBar progress = (ProgressBar) findViewById(R.id.progressScanning);
+				progress.setVisibility(ProgressBar.INVISIBLE);
+				
+				Button searchButton = (Button) findViewById(R.id.buttonSearch);
+				searchButton.setEnabled(true);
+				searchButton.setText("Search for devices");
 				
 				if (list.size() == 0) {
 					sendToast("No watch found");
@@ -89,20 +97,15 @@ public class DeviceSelection extends Activity {
 				String deviceName = device.getName();
 				String deviceMac = device.getAddress();
 				
-				//int cl = device.getBluetoothClass().getMajorDeviceClass();
-				//if (Preferences.logging) Log.d(MetaWatch.TAG, "device class: " + cl);
-				
 				addToList(deviceMac, deviceName);
 			}
 		}
 	}
 	
-	ProgressDialog pdWait = null;
-	
 	Context context;
 	ListView listView;
-	//static ArrayList<String> menuList = new ArrayList<String>();
 	List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+	Set<String> foundMacs = new TreeSet<String>();
 	private Receiver receiver;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -115,23 +118,9 @@ public class DeviceSelection extends Activity {
 			finish();
 			return;
 		}
-		
-		pdWait = ProgressDialog.show(this, "Please wait", "Searching Bluetooth devices...");
-		pdWait.setCancelable(true);
-		pdWait.setOnCancelListener(new OnCancelListener() {			
-			public void onCancel(DialogInterface dialog) {
-				if (Preferences.logging) Log.d(MetaWatch.TAG, "canceled");
-				if (MetaWatchService.bluetoothAdapter.isDiscovering())
-					MetaWatchService.bluetoothAdapter.cancelDiscovery();
-				finish();								
-			}
-		});
-		pdWait.show();
-		
+	
 		setContentView(R.layout.device_selection);
-		//constructMenuList();
 		listView = (ListView) findViewById(android.R.id.list);
-		//listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, menuList));
 		
 		listView.setOnItemClickListener(new OnItemClickListener() {
 
@@ -152,6 +141,19 @@ public class DeviceSelection extends Activity {
 			
 		});
 		
+		Button searchButton = (Button) findViewById(R.id.buttonSearch);
+		
+		searchButton.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View arg0) {
+				startDiscovery();
+			}
+
+
+		});
+		
+		
+		
 		if (MetaWatchService.bluetoothAdapter == null)
 			MetaWatchService.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		
@@ -162,6 +164,20 @@ public class DeviceSelection extends Activity {
 		    }
 		}
 		
+		SharedPreferences sharedPreferences = PreferenceManager
+				.getDefaultSharedPreferences(context);
+		boolean showFakeWatches = sharedPreferences.getBoolean("ShowFakeWatches", false);
+		
+		if(showFakeWatches) {		
+			addToList("DIGITAL", "Fake Digital Watch (Use for debugging digital functionality within MWM)");
+			addToList("ANALOG", "Fake Analog Watch (Use for debugging analog functionality within MWM)");
+		}
+		
+		startDiscovery();
+	
+	}
+	
+	void startDiscovery() {
 		receiver = new Receiver();
 		IntentFilter intentFilter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 		intentFilter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -170,20 +186,29 @@ public class DeviceSelection extends Activity {
 		
 		MetaWatchService.bluetoothAdapter.startDiscovery();
 		
+		ProgressBar progress = (ProgressBar) findViewById(R.id.progressScanning);
+		progress.setVisibility(ProgressBar.VISIBLE);
+		
+		Button searchButton = (Button) findViewById(R.id.buttonSearch);
+		searchButton.setEnabled(false);
+		searchButton.setText("Searching...");
 	}
 	
 	void addToList(String mac, String name) {
-		Map<String, String> map = new HashMap<String, String>();
-		map.put("mac", mac);
-		map.put("name", name);
-		list.add(map);
-		//menuList.add(mac);
-		displayList();
+		
+		if(!foundMacs.contains(mac)) {	
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("mac", mac);
+			map.put("name", name);
+					
+			list.add(map);
+			foundMacs.add(mac);
+			displayList();
+		}
 	}
 	
 	void displayList() {
 		
-		//listView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, menuList));
 		listView.setAdapter(new SimpleAdapter(this, list, R.layout.list_item, new String[] { "name", "mac"}, new int[] { R.id.text1, R.id.text2} ));
 	}
 	

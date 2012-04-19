@@ -88,14 +88,16 @@ public class WidgetSetup extends Activity {
 			
 		int i=1;
 		for(String line : rows) {
-	    	Map<String, String> curGroupMap = new HashMap<String, String>();
+
+			String[] widgets = (line).split(",");
+			
+			Map<String, String> curGroupMap = new HashMap<String, String>();
 	        groupData.add(curGroupMap);
-	        curGroupMap.put(NAME, "Row " + (i++));
-	        curGroupMap.put(ID, "Id");
 	        
 	        List<Map<String, String>> children = new ArrayList<Map<String, String>>();
 	        
-			String[] widgets = (line).split(",");
+	        int widgetCount = 0;
+	        
 			for(String widget : widgets) {
 				widget = widget.trim();
 	        	Map<String, String> curChildMap = new HashMap<String, String>();
@@ -103,8 +105,10 @@ public class WidgetSetup extends Activity {
 	            String name = widget;
 	            if(widget==null || widget=="")
 	            	name="<empty>";
-	            if(widgetMap.containsKey(widget))
+	            if(widgetMap.containsKey(widget)) {
 	            	name = widgetMap.get(widget).description;
+	            	widgetCount++;
+	            }
 	            curChildMap.put(NAME, name);
 	            curChildMap.put(ID, widget);
 	        }
@@ -115,6 +119,11 @@ public class WidgetSetup extends Activity {
 	            curChildMap.put(NAME, "<empty>");
 	            curChildMap.put(ID, "");
 			}
+			
+			
+	        
+	        curGroupMap.put(NAME, getGroupName(i++, widgetCount));
+	        curGroupMap.put(ID, "Id");
 			
 	        childData.add(children);
 		}	    
@@ -135,6 +144,27 @@ public class WidgetSetup extends Activity {
 		
 		refreshPreview();
 	}
+	
+	private String getGroupName(int group, int widgetCount) {
+        StringBuilder nameSb = new StringBuilder();
+        nameSb.append("Row ");
+        nameSb.append(group);
+        nameSb.append(" ");
+
+        if(widgetCount==0) {
+        	nameSb.append("(empty)");
+        }
+        else if(widgetCount==1) {
+        	nameSb.append("(1 widget)");
+        }
+        else {
+        	nameSb.append("(");
+        	nameSb.append(widgetCount);
+        	nameSb.append(" widgets)");
+        }
+        
+        return nameSb.toString();
+	}
     
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -149,7 +179,7 @@ public class WidgetSetup extends Activity {
         	
         	if(groupPosition>-1 && childPosition>-1) {
         		Map<String,String> curChildMap = childData.get(groupPosition).get(childPosition);
-        		if(id==null || id=="") {
+        		if(id==null || id.equalsIgnoreCase("")) {
     	            curChildMap.put(NAME, "<empty>");
     	            curChildMap.put(ID, "");
         		}
@@ -161,39 +191,53 @@ public class WidgetSetup extends Activity {
 		            curChildMap.put(ID, id);
         		}
         	}
+        	
+        	int widgetCount = 0;
+        	int childCount = childData.get(groupPosition).size();
+        	for(int i=0; i<childCount;++i) {
+        		Map<String,String> curChildMap = childData.get(groupPosition).get(i);
+        		if(!curChildMap.get(ID).equalsIgnoreCase("")) {
+        			widgetCount++;
+        		}
+        	}
+        	
+        	groupData.get(groupPosition).put(NAME, getGroupName(groupPosition+1, widgetCount));
+        	
         	adapter.notifyDataSetChanged();
         	storeWidgetLayout();
         	refreshPreview();
         	Idle.updateIdle(this, true);
+	        if(MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
+	        	Idle.sendOledIdle(this);
+	        }
         }
     }
     
     private void refreshPreview() {
-    	Idle.updateWidgetPages(this, true);
+    	Idle.updateIdlePages(this, true);
     	LinearLayout ll = (LinearLayout) findViewById(R.id.idlePreviews);
     	
     	ll.removeAllViews();
     	  	
     	int pages = Idle.numPages();
     	for(int i=0; i<pages; ++i) {
-    		Bitmap bmp = null;
-    		if (MetaWatchService.watchType == MetaWatchService.WatchType.DIGITAL)
-    			bmp = Idle.createLcdIdle(this, true, i);
-    		else if (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG)
-    			bmp = Idle.createOledIdle(this, true, i);
+    		Bitmap bmp = Idle.createIdle(this, true, i);;
 
     		if (bmp!=null) {
     			
     			int backCol = Color.LTGRAY;
+    			int viewId = (MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) 
+    					? R.layout.idle_screen_preview_oled
+    				    : R.layout.idle_screen_preview;
     			
         		if(Preferences.invertLCD || MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
         			Utils.invertBitmap(bmp);
-        			backCol = Color.DKGRAY;
+        			backCol = 0xff111111;
         		}
-    			
+        		    			
 	    		LayoutInflater factory = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	
-	    		View v = factory.inflate(R.layout.idle_screen_preview, null);
+	    		View v = factory.inflate(viewId, null);
 	    		ImageView iv = (ImageView)v.findViewById(R.id.image);
 	    		iv.setImageBitmap(bmp);
 	    		iv.setClickable(true);
@@ -205,6 +249,10 @@ public class WidgetSetup extends Activity {
 	    		    	Integer page = (Integer)v.getTag();
 	    		        Idle.toPage(page);
 	    		        Idle.updateIdle(v.getContext(), true);
+	    		        
+	    		        if(MetaWatchService.watchType == MetaWatchService.WatchType.ANALOG) {
+	    		        	Idle.sendOledIdle(v.getContext());
+	    		        }
 	    		    }
 	    		});
 	    		ll.addView(v);

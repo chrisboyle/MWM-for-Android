@@ -108,7 +108,7 @@ public class Call {
 			canvas.restore();
 			
 			Protocol.sendLcdBitmap(bitmap, MetaWatchService.WatchBuffers.NOTIFICATION);		
-			Protocol.updateDisplay(2);
+			Protocol.updateLcdDisplay(2);
 		} else {
 			Notification
 					.addOledNotification(context, Protocol.createOled1line(

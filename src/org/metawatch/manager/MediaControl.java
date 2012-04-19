@@ -33,6 +33,7 @@
 package org.metawatch.manager;
 
 import org.metawatch.manager.MetaWatchService.Preferences;
+import org.metawatch.manager.MetaWatchService.WatchType;
 import org.metawatch.manager.Notification.VibratePattern;
 
 import android.content.Context;
@@ -47,18 +48,11 @@ public class MediaControl {
 	final static int MUSICSERVICECOMMAND = 0;
 	final static int EMULATE_HEADSET = 1;
 	
-	final static byte VOLUME_UP = 10;
-	final static byte VOLUME_DOWN = 11;
-	final static byte NEXT = 15;
-	final static byte PREVIOUS = 16;
-	final static byte HEADSET = 17;
-	final static byte TOGGLE = 20;
+	public static String lastArtist = "";
+	public static String lastAlbum = "";
+	public static String lastTrack = "";
 	
-	static String lastArtist = "";
-	static String lastAlbum = "";
-	static String lastTrack = "";
-	
-	static boolean mediaPlayerActive = false;
+	public static boolean mediaPlayerActive = false;
 	
 	public static void next(Context context) {
 		if (Preferences.logging) Log.d(MetaWatch.TAG, "MediaControl.next()");
@@ -87,6 +81,10 @@ public class MediaControl {
 		}
 		else {
 			sendMediaButtonEvent(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+		}
+		
+		if (MetaWatchService.watchType == WatchType.ANALOG) {
+			Idle.sendOledIdle(context);
 		}
 	}
 
@@ -160,8 +158,13 @@ public class MediaControl {
 						vibratePattern.off,
 						vibratePattern.cycles);
 			
-			if (Preferences.notifyLight)
-				Protocol.ledChange(true);
+			if (MetaWatchService.watchType == WatchType.DIGITAL) {
+				if (Preferences.notifyLight)
+					Protocol.ledChange(true);
+			}
+			else if (MetaWatchService.watchType == WatchType.ANALOG) {
+				Idle.sendOledIdle(context);
+			}
 			
 		}
 		else {
